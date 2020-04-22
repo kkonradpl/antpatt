@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2020  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -17,8 +17,9 @@
 #include "version.h"
 #include "pattern-ui-window.h"
 
+static gboolean pattern_ui_window_delete(pattern_ui_window_t*);
+static gboolean pattern_ui_window_attach(pattern_ui_window_t*);
 static void pattern_ui_window_detach(pattern_ui_window_t*);
-static void pattern_ui_window_attach(pattern_ui_window_t*);
 
 pattern_ui_window_t*
 pattern_ui_window_new()
@@ -238,9 +239,34 @@ pattern_ui_window_new()
     ui->b_hide = gtk_check_button_new_with_label("Hide");
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_hide, FALSE, FALSE, 0);
 
-    g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_detach), ui);
+    g_signal_connect_swapped(ui->window, "delete-event", G_CALLBACK(pattern_ui_window_delete), ui);
     g_signal_connect_swapped(ui->window_plot, "delete-event", G_CALLBACK(pattern_ui_window_attach), ui);
+    g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_detach), ui);
     return ui;
+}
+
+static gboolean
+pattern_ui_window_delete(pattern_ui_window_t *ui)
+{
+    /* Destroy the plot window first */
+    gtk_widget_destroy(GTK_WIDGET(ui->window_plot));
+
+    return FALSE;
+}
+
+static gboolean
+pattern_ui_window_attach(pattern_ui_window_t *ui)
+{
+    gtk_button_set_label(GTK_BUTTON(ui->b_detach), "Detach");
+    g_signal_handlers_disconnect_by_func(ui->b_detach, G_CALLBACK(pattern_ui_window_attach), (gpointer)ui);
+    g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_detach), (gpointer)ui);
+
+    gtk_widget_hide(ui->window_plot);
+    gtk_widget_hide(ui->separator);
+    g_object_ref(ui->plot);
+    gtk_container_remove(GTK_CONTAINER(ui->window_plot), ui->plot);
+    gtk_container_add(GTK_CONTAINER(ui->box_plot), ui->plot);
+    g_object_unref(ui->plot);
 }
 
 static void
@@ -258,19 +284,4 @@ pattern_ui_window_detach(pattern_ui_window_t *ui)
     gtk_window_set_transient_for(GTK_WINDOW(ui->window_plot), GTK_WINDOW(ui->window));
     gtk_widget_show_all(ui->window_plot);
     gtk_window_set_transient_for(GTK_WINDOW(ui->window_plot), NULL);
-}
-
-static void
-pattern_ui_window_attach(pattern_ui_window_t *ui)
-{
-    gtk_button_set_label(GTK_BUTTON(ui->b_detach), "Detach");
-    g_signal_handlers_disconnect_by_func(ui->b_detach, G_CALLBACK(pattern_ui_window_attach), (gpointer)ui);
-    g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_detach), (gpointer)ui);
-
-    gtk_widget_hide(ui->window_plot);
-    gtk_widget_hide(ui->separator);
-    g_object_ref(ui->plot);
-    gtk_container_remove(GTK_CONTAINER(ui->window_plot), ui->plot);
-    gtk_container_add(GTK_CONTAINER(ui->box_plot), ui->plot);
-    g_object_unref(ui->plot);
 }

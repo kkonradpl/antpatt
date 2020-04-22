@@ -73,6 +73,10 @@ if(MINGW)
     add_executable(antpatt ${SOURCE_FILES} ${SOURCE_FILES_MINGW})
 ELSE()
     add_executable(antpatt ${SOURCE_FILES})
+    install(TARGETS antpatt DESTINATION bin)
+    install(DIRECTORY icons/ DESTINATION share/icons/hicolor
+            PATTERN "ico" EXCLUDE)
+    install(CODE "execute_process(COMMAND gtk-update-icon-cache /usr/share/icons/hicolor)")
 ENDIF()
 
 target_link_libraries(antpatt ${LIBRARIES})

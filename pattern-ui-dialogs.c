@@ -297,9 +297,6 @@ pattern_ui_dialog_about(GtkWindow *window)
     gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog), "Antenna pattern plotting and analysis software");
     gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog), "https://github.com/kkonradpl/antpatt");
     gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog), APP_LICENCE);
-#ifdef G_OS_WIN32
-    g_signal_connect(dialog, "activate-link", G_CALLBACK(win32_uri_signal), NULL);
-#endif
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }

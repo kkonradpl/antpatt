@@ -24,59 +24,14 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 link_directories(${ZLIB_LIBRARY_DIRS})
 add_definitions(${ZLIB_CFLAGS_OTHER})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Wno-deprecated-declarations")
 
-set(SOURCE_FILES
-        main.c
-        pattern.c
-        pattern.h
-        pattern-color.c
-        pattern-color.h
-        pattern-data.c
-        pattern-data.h
-        pattern-import.c
-        pattern-import.h
-        pattern-json.c
-        pattern-json.h
-        pattern-misc.c
-        pattern-misc.h
-        pattern-plot.c
-        pattern-plot.h
-        pattern-signal.c
-        pattern-signal.h
-        pattern-ui-dialogs.c
-        pattern-ui-dialogs.h
-        pattern-ui-window.c
-        pattern-ui-window.h
-        pattern-ui.c
-        pattern-ui.h
-        version.h)
+add_subdirectory(src)
 
-set(SOURCE_FILES_MINGW
-        icon.rc
-        win32.c
-        win32.h)
-
-set(LIBRARIES
-        ${GTK_LIBRARIES}
-        ${GSL_LIBRARIES}
-        ${JSON-C_LIBRARIES}
-        ${ZLIB_LIBRARIES})
-
-if(MINGW)
-    IF(NOT (CMAKE_BUILD_TYPE MATCHES Debug))
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mwindows")
-    ENDIF()
-    set(CMAKE_RC_COMPILER_INIT windres)
-    ENABLE_LANGUAGE(RC)
-    SET(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
-    add_executable(antpatt ${SOURCE_FILES} ${SOURCE_FILES_MINGW})
-ELSE()
-    add_executable(antpatt ${SOURCE_FILES})
+if(NOT MINGW)
     install(TARGETS antpatt DESTINATION bin)
+    install(FILES antpatt.desktop DESTINATION share/applications)
     install(DIRECTORY icons/ DESTINATION share/icons/hicolor
             PATTERN "ico" EXCLUDE)
     install(CODE "execute_process(COMMAND gtk-update-icon-cache /usr/share/icons/hicolor)")
-ENDIF()
-
-target_link_libraries(antpatt ${LIBRARIES})
+endif()

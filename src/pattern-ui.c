@@ -141,11 +141,7 @@ pattern_ui_create(pattern_t *p)
     g_signal_connect(ui->plot, "button-press-event", G_CALLBACK(pattern_plot_click), p);
     g_signal_connect(ui->plot, "button-release-event", G_CALLBACK(pattern_plot_click), p);
     g_signal_connect(ui->plot, "leave-notify-event", G_CALLBACK(pattern_plot_leave), p);
-#if GTK_CHECK_VERSION (3, 0, 0)
     g_signal_connect(ui->plot, "draw", G_CALLBACK(pattern_plot), p);
-#else
-    g_signal_connect(ui->plot, "expose-event", G_CALLBACK(pattern_plot), p);
-#endif
 
     g_signal_connect(ui->b_add, "clicked", G_CALLBACK(pattern_ui_add), p);
     g_signal_connect(ui->b_down, "clicked", G_CALLBACK(pattern_ui_down), p);
@@ -442,7 +438,7 @@ pattern_ui_select(GtkWidget *widget,
         g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
 
         g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
-        gtk_color_button_set_color(GTK_COLOR_BUTTON(pattern_get_ui(p)->b_color), pattern_data_get_color(data));
+        gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(pattern_get_ui(p)->b_color), pattern_data_get_color(data));
         g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
 
         g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
@@ -530,7 +526,7 @@ static void
 pattern_ui_color(GtkWidget *widget,
                  pattern_t *p)
 {
-    gtk_color_button_get_color(GTK_COLOR_BUTTON(widget), pattern_data_get_color(pattern_get_current(p)));
+    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(widget), pattern_data_get_color(pattern_get_current(p)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
 
@@ -538,8 +534,8 @@ static void
 pattern_ui_color_next(GtkWidget *widget,
                       pattern_t *p)
 {
-    GdkColor next = pattern_color_next();
-    gtk_color_button_set_color(GTK_COLOR_BUTTON(pattern_get_ui(p)->b_color), &next);
+    GdkRGBA next = pattern_color_next();
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(pattern_get_ui(p)->b_color), &next);
     g_signal_emit_by_name(pattern_get_ui(p)->b_color, "color-set", p);
 }
 
@@ -791,7 +787,7 @@ pattern_ui_read(pattern_t *p,
     gint index;
     gint error;
     gboolean added = FALSE;
-    GdkColor color;
+    GdkRGBA color;
 
     for(it = list; it; it = it->next)
     {

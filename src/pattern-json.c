@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
 #include <zlib.h>
 #include <string.h>
 #include "pattern.h"
+#include "pattern-color.h"
 
 #define PATTERN_JSON_VERSION 1
 
@@ -225,7 +226,7 @@ pattern_json_parse_data(json_object *root)
     pattern_data_t *data;
     pattern_signal_t *s;
     size_t len, i;
-    GdkColor color;
+    GdkRGBA color;
 
     if(!json_object_object_get_ex(root, KEY_SAMPLES, &array) ||
        !json_object_is_type(array, json_type_array) ||
@@ -273,7 +274,7 @@ pattern_json_parse_data(json_object *root)
     if(json_object_object_get_ex(root, KEY_COLOR, &object) &&
        json_object_is_type(object, json_type_string))
     {
-        if(gdk_color_parse(json_object_get_string(object), &color))
+        if(gdk_rgba_parse(&color, json_object_get_string(object)))
             pattern_data_set_color(data, &color);
     }
 
@@ -408,7 +409,7 @@ pattern_json_build_foreach(GtkTreeModel *model,
     json_object_object_add(child, KEY_NAME,     json_object_new_string(pattern_data_get_name(data)));
     json_object_object_add(child, KEY_FREQ,     json_object_new_int(pattern_data_get_freq(data)));
 
-    color = gdk_color_to_string(pattern_data_get_color(data));
+    color = pattern_color_to_string(pattern_data_get_color(data));
     json_object_object_add(child, KEY_COLOR,    json_object_new_string(color));
     g_free(color);
 

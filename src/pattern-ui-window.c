@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2020  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -38,14 +38,15 @@ pattern_ui_window_new()
     gtk_window_set_resizable(GTK_WINDOW(ui->window_plot), FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(ui->window_plot), 0);
 
-    ui->box = gtk_vbox_new(FALSE, 4);
+    ui->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->window), ui->box);
 
-    ui->box_buttons = gtk_hbox_new(FALSE, 4);
+    ui->box_buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_buttons);
 
-    ui->box_buttons_main = gtk_hbox_new(TRUE, 4);
-    gtk_container_add(GTK_CONTAINER(ui->box_buttons), ui->box_buttons_main);
+    ui->box_buttons_main = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    gtk_box_set_homogeneous(GTK_BOX(ui->box_buttons_main), TRUE);
+    gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->box_buttons_main, TRUE, TRUE, 0);
 
     ui->b_new = gtk_button_new_with_label("New");
     gtk_button_set_image(GTK_BUTTON(ui->b_new), gtk_image_new_from_icon_name("document-new", GTK_ICON_SIZE_BUTTON));
@@ -71,7 +72,7 @@ pattern_ui_window_new()
     gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("gtk-about", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->b_about, FALSE, FALSE, 0);
 
-    ui->box_header1 = gtk_hbox_new(FALSE, 4);
+    ui->box_header1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_header1);
 
     ui->l_size = gtk_label_new("Size:");
@@ -102,7 +103,7 @@ pattern_ui_window_new()
     ui->s_line = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, 0.1, 2.0, 0.1, 0.2, 0.0)), 0, 1);
     gtk_box_pack_start(GTK_BOX(ui->box_header1), ui->s_line, FALSE, FALSE, 0);
 
-    ui->box_header2 = gtk_hbox_new(FALSE, 4);
+    ui->box_header2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_header2);
 
     ui->l_interp = gtk_label_new("Interpolation:");
@@ -130,17 +131,17 @@ pattern_ui_window_new()
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_legend), TRUE);
     gtk_box_pack_start(GTK_BOX(ui->box_header2), ui->b_legend, FALSE, FALSE, 0);
 
-    ui->box_plot = gtk_vbox_new(FALSE, 0);
+    ui->box_plot = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_plot);
 
-    ui->separator = gtk_hseparator_new();
+    ui->separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_box_pack_start(GTK_BOX(ui->box_plot), ui->separator, FALSE, FALSE, 0);
 
     ui->plot = gtk_drawing_area_new();
     gtk_widget_add_events(ui->plot, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK);
-    gtk_box_pack_start(GTK_BOX(ui->box_plot), ui->plot, FALSE, FALSE, 0);
+    gtk_box_set_center_widget(GTK_BOX(ui->box_plot), ui->plot);
 
-    ui->box_select = gtk_hbox_new(FALSE, 4);
+    ui->box_select = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_select);
 
     ui->b_add = gtk_button_new_with_label("Add");
@@ -173,7 +174,7 @@ pattern_ui_window_new()
     gtk_button_set_image(GTK_BUTTON(ui->b_clear), gtk_image_new_from_icon_name("edit-clear", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_clear, FALSE, FALSE, 0);
 
-    ui->box_edit1 = gtk_hbox_new(FALSE, 4);
+    ui->box_edit1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_edit1);
 
     ui->l_name = gtk_label_new("Name:");
@@ -203,7 +204,7 @@ pattern_ui_window_new()
     gtk_button_set_image(GTK_BUTTON(ui->b_color_next), gtk_image_new_from_icon_name("gtk-select-color", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->b_color_next, FALSE, FALSE, 0);
 
-    ui->box_edit2 = gtk_hbox_new(FALSE, 4);
+    ui->box_edit2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_edit2);
 
     ui->b_rotate_reset = gtk_button_new();
@@ -265,7 +266,7 @@ pattern_ui_window_attach(pattern_ui_window_t *ui)
     gtk_widget_hide(ui->separator);
     g_object_ref(ui->plot);
     gtk_container_remove(GTK_CONTAINER(ui->window_plot), ui->plot);
-    gtk_container_add(GTK_CONTAINER(ui->box_plot), ui->plot);
+    gtk_box_set_center_widget(GTK_BOX(ui->box_plot), ui->plot);
     g_object_unref(ui->plot);
 }
 

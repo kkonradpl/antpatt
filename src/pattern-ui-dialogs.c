@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2020  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -60,8 +60,8 @@ pattern_ui_dialog_open(GtkWindow *window)
     dialog = gtk_file_chooser_dialog_new("Open project",
                                          window,
                                          GTK_FILE_CHOOSER_ACTION_OPEN,
-                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                         GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Open", GTK_RESPONSE_ACCEPT,
                                          NULL);
 
     filter = gtk_file_filter_new();
@@ -89,14 +89,14 @@ pattern_ui_dialog_save(GtkWindow *window)
     dialog = gtk_file_chooser_dialog_new("Save project",
                                          window,
                                          GTK_FILE_CHOOSER_ACTION_SAVE,
-                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                         GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Save", GTK_RESPONSE_ACCEPT,
                                          NULL);
 
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(dialog), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 
-    box = gtk_hbox_new(FALSE, 12);
+    box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
 
     compression = gtk_check_button_new_with_label("Compress (.gz)");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(compression), TRUE);
@@ -192,8 +192,8 @@ pattern_ui_dialog_import(GtkWindow *window)
     dialog = gtk_file_chooser_dialog_new("Import files",
                                          window,
                                          GTK_FILE_CHOOSER_ACTION_OPEN,
-                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                         GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Open", GTK_RESPONSE_ACCEPT,
                                          NULL);
 
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
@@ -214,8 +214,8 @@ pattern_ui_dialog_export(GtkWindow *window)
     dialog = gtk_file_chooser_dialog_new("Export pattern plot",
                                          window,
                                          GTK_FILE_CHOOSER_ACTION_SAVE,
-                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                         GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Save", GTK_RESPONSE_ACCEPT,
                                          NULL);
 
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(dialog), TRUE);
@@ -288,14 +288,14 @@ void
 pattern_ui_dialog_about(GtkWindow *window)
 {
     GtkWidget *dialog = gtk_about_dialog_new();
-    gtk_window_set_icon_name(GTK_WINDOW(dialog), GTK_STOCK_ABOUT);
+    gtk_window_set_icon_name(GTK_WINDOW(dialog), "gtk-about");
     gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
     gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), APP_NAME);
     gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog), APP_VERSION);
     gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog), APP_ICON);
-    gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog), "Copyright © 2017-2020 Konrad Kosmatka");
+    gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog), "Copyright © 2017-2022 Konrad Kosmatka");
     gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog), "Antenna pattern plotting and analysis software");
-    gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog), "https://github.com/kkonradpl/antpatt");
+    gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog), "https://fmdx.pl/antpatt");
     gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog), APP_LICENCE);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);

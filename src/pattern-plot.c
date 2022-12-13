@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -66,22 +66,11 @@ static gdouble pattern_plot_signal(gint, gdouble);
 
 
 gboolean
-#if GTK_CHECK_VERSION (3, 0, 0)
 pattern_plot(GtkWidget      *widget,
              cairo_t        *cr,
              pattern_t      *p)
 {
-#else
-pattern_plot(GtkWidget      *widget,
-             GdkEventExpose *event,
-             pattern_t      *p)
-{
-    cairo_t *cr = gdk_cairo_create(gtk_widget_get_window(widget));
-#endif
     pattern_plot_cairo(cr, p);
-#if !GTK_CHECK_VERSION (3, 0, 0)
-    cairo_destroy(cr);
-#endif
     return FALSE;
 }
 
@@ -328,14 +317,14 @@ pattern_plot_radiation_data(cairo_t        *cr,
     gdouble sample;
     gboolean finished;
     pattern_signal_t *s = pattern_data_get_signal(data);
-    GdkColor *color = pattern_data_get_color(data);
+    GdkRGBA *color = pattern_data_get_color(data);
     gint interp = pattern_signal_interp(s);
 
     cairo_set_line_width(cr, line_width);
     cairo_set_source_rgba(cr,
-                          color->red/65535.0,
-                          color->green/65535.0,
-                          color->blue/65535.0,
+                          color->red,
+                          color->green,
+                          color->blue,
                           PATTERN_PLOT_FG_ALPHA);
 
     count = pattern_signal_count(s);
@@ -367,9 +356,9 @@ pattern_plot_radiation_data(cairo_t        *cr,
     {
         cairo_stroke_preserve(cr);
         cairo_set_source_rgba(cr,
-                              color->red/65535.0,
-                              color->green/65535.0,
-                              color->blue/65535.0,
+                              color->red,
+                              color->green,
+                              color->blue,
                               PATTERN_PLOT_BG_ALPHA);
         cairo_fill(cr);
     }
@@ -387,7 +376,7 @@ pattern_plot_legend(cairo_t        *cr,
                     gint            index)
 {
     gint offset = (gint)(plot->width/(PATTERN_BASE_SIZE/(PATTERN_OFFSET/4.0)));
-    GdkColor *color = pattern_data_get_color(data);
+    GdkRGBA *color = pattern_data_get_color(data);
 
     gint line_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_PLOT_LEGEND_WIDTH));
     gint font_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
@@ -396,9 +385,9 @@ pattern_plot_legend(cairo_t        *cr,
 
     cairo_set_line_width(cr, line_height);
     cairo_set_source_rgba(cr,
-                          color->red/65535.0,
-                          color->green/65535.0,
-                          color->blue/65535.0,
+                          color->red,
+                          color->green,
+                          color->blue,
                           PATTERN_PLOT_FG_ALPHA);
     x = offset;
     y = plot->width - (visible-index)*(font_height+spacing+line_height) + spacing - offset;
@@ -406,16 +395,16 @@ pattern_plot_legend(cairo_t        *cr,
     cairo_rectangle(cr, x+0.5, y+0.5, font_height, font_height);
     cairo_stroke_preserve(cr);
     cairo_set_source_rgba(cr,
-                          color->red/65535.0,
-                          color->green/65535.0,
-                          color->blue/65535.0,
+                          color->red,
+                          color->green,
+                          color->blue,
                           PATTERN_PLOT_BG_ALPHA);
     cairo_fill(cr);
 
     cairo_set_source_rgba(cr,
-                          color->red/65535.0,
-                          color->green/65535.0,
-                          color->blue/65535.0,
+                          color->red,
+                          color->green,
+                          color->blue,
                           1.0);
 
     cairo_set_font_size(cr, font_height);
@@ -494,7 +483,7 @@ pattern_plot_info(cairo_t        *cr,
     gint idx =  pattern_get_focus_idx(p);
     gdouble angle = idx/(gdouble)count*360.0;
     gdouble peak = (pattern_get_normalize(p) ? pattern_signal_get_peak(pattern_data_get_signal(data)) : pattern_get_peak(p));
-    GdkColor *color = pattern_data_get_color(data);
+    GdkRGBA *color = pattern_data_get_color(data);
     gint offset = (gint)(plot->width/(PATTERN_BASE_SIZE/(PATTERN_OFFSET/4.0)));
     gint font_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
     gint spacing = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_LEGEND_SPACING));
@@ -505,9 +494,9 @@ pattern_plot_info(cairo_t        *cr,
         angle -= 360.0;
 
     cairo_set_source_rgba(cr,
-                          color->red/65535.0,
-                          color->green/65535.0,
-                          color->blue/65535.0,
+                          color->red,
+                          color->green,
+                          color->blue,
                           1.0);
     cairo_set_font_size(cr, font_height);
     x = offset;

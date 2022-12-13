@@ -16,11 +16,7 @@
 #ifndef ANTPATT_PATTERN_PLOT_H_
 #define ANTPATT_PATTERN_PLOT_H_
 
-#if GTK_CHECK_VERSION (3, 0, 0)
 gboolean pattern_plot(GtkWidget*, cairo_t*, pattern_t*);
-#else
-gboolean pattern_plot(GtkWidget*, GdkEventExpose*, pattern_t*);
-#endif
 
 gboolean pattern_plot_motion(GtkWidget*, GdkEventMotion*, pattern_t*);
 gboolean pattern_plot_click(GtkWidget*, GdkEventButton*, pattern_t*);

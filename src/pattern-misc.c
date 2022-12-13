@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include "pattern.h"
+#include "pattern-color.h"
 
 gchar*
 pattern_misc_format_frequency(gint freq)
@@ -74,7 +75,7 @@ pattern_misc_info_all(pattern_t *p,
             count = pattern_signal_count(s);
             x = angle/360.0 * count;
             peak = (pattern_get_normalize(p) ? pattern_signal_get_peak(pattern_data_get_signal(data)) : pattern_get_peak(p)),
-            color = gdk_color_to_string(pattern_data_get_color(data));
+            color = pattern_color_to_string(pattern_data_get_color(data));
 
             g_string_append_printf(str,
                                    "<span background=\"%s\" foreground=\"%s\"><b>%s</b></span>\n"

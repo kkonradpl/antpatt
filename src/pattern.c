@@ -19,7 +19,7 @@
 #include "pattern-ui.h"
 
 /* Default settings */
-#define PATTERN_DEFAULT_SIZE       500
+#define PATTERN_DEFAULT_SIZE       600
 #define PATTERN_DEFAULT_TITLE      ""
 #define PATTERN_DEFAULT_SCALE      0
 #define PATTERN_DEFAULT_LINE       1.0

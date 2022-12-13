@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@ typedef struct pattern_data
     pattern_signal_t *s;
     gchar *name;
     gint freq;
-    GdkColor color;
+    GdkRGBA color;
     gboolean hide;
     gboolean fill;
 } pattern_data_t;
@@ -85,7 +85,7 @@ pattern_data_set_freq(pattern_data_t *data,
     data->freq = value;
 }
 
-GdkColor*
+GdkRGBA*
 pattern_data_get_color(pattern_data_t *data)
 {
     g_assert(data != NULL);
@@ -94,7 +94,7 @@ pattern_data_get_color(pattern_data_t *data)
 
 void
 pattern_data_set_color(pattern_data_t *data,
-                       const GdkColor *value)
+                       const GdkRGBA  *value)
 {
     g_assert(data != NULL);
     data->color = *value;

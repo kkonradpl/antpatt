@@ -20,6 +20,7 @@
 #include "pattern-import.h"
 #include "pattern-color.h"
 #include "pattern-json.h"
+#include "pattern-export.h"
 
 #define UI_DRAG_URI_LIST_ID 0
 
@@ -32,7 +33,7 @@ static void pattern_ui_exit(GtkWidget*, pattern_t*);
 static void pattern_ui_new(GtkWidget*, pattern_t*);
 static void pattern_ui_load(GtkWidget*, pattern_t*);
 static void pattern_ui_save(GtkWidget*, pattern_t*);
-static void pattern_ui_export(GtkWidget*, pattern_t*);
+static void pattern_ui_render(GtkWidget*, pattern_t*);
 static void pattern_ui_about(GtkWidget*, pattern_t*);
 
 static void pattern_ui_size(GtkWidget*, pattern_t*);
@@ -50,6 +51,7 @@ static void pattern_ui_down(GtkWidget*, pattern_t*);
 static void pattern_ui_up(GtkWidget*, pattern_t*);
 
 static void pattern_ui_select(GtkWidget*, pattern_t*);
+static void pattern_ui_export(GtkWidget*, pattern_t*);
 static void pattern_ui_remove(GtkWidget*, pattern_t*);
 static void pattern_ui_clear(GtkWidget*, pattern_t*);
 static void pattern_ui_name(GtkWidget*, pattern_t*);
@@ -123,7 +125,7 @@ pattern_ui_create(pattern_t *p)
     g_signal_connect(ui->b_new, "clicked", G_CALLBACK(pattern_ui_new), p);
     g_signal_connect(ui->b_load, "clicked", G_CALLBACK(pattern_ui_load), p);
     g_signal_connect(ui->b_save, "clicked", G_CALLBACK(pattern_ui_save), p);
-    g_signal_connect(ui->b_export, "clicked", G_CALLBACK(pattern_ui_export), p);
+    g_signal_connect(ui->b_render, "clicked", G_CALLBACK(pattern_ui_render), p);
     g_signal_connect(ui->b_about, "clicked", G_CALLBACK(pattern_ui_about), p);
 
     g_signal_connect(ui->s_size, "changed", G_CALLBACK(pattern_ui_size), p);
@@ -147,6 +149,7 @@ pattern_ui_create(pattern_t *p)
     g_signal_connect(ui->b_down, "clicked", G_CALLBACK(pattern_ui_down), p);
     g_signal_connect(ui->b_up, "clicked", G_CALLBACK(pattern_ui_up), p);
     g_signal_connect(ui->c_select, "changed", G_CALLBACK(pattern_ui_select), p);
+    g_signal_connect(ui->b_export, "clicked", G_CALLBACK(pattern_ui_export), p);
     g_signal_connect(ui->b_remove, "clicked", G_CALLBACK(pattern_ui_remove), p);
     g_signal_connect(ui->b_clear, "clicked", G_CALLBACK(pattern_ui_clear), p);
 
@@ -247,10 +250,10 @@ pattern_ui_save(GtkWidget *widget,
 }
 
 static void
-pattern_ui_export(GtkWidget *widget,
+pattern_ui_render(GtkWidget *widget,
                   pattern_t *p)
 {
-    gchar *filename = pattern_ui_dialog_export(GTK_WINDOW(pattern_get_ui(p)->window));
+    gchar *filename = pattern_ui_dialog_render(GTK_WINDOW(pattern_get_ui(p)->window));
     if(filename)
     {
         if(!pattern_plot_to_file(p, filename))
@@ -418,7 +421,6 @@ pattern_ui_select(GtkWidget *widget,
     pattern_signal_t *signal;
     gboolean active;
 
-
     active = gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter);
     if(active)
     {
@@ -456,6 +458,38 @@ pattern_ui_select(GtkWidget *widget,
 
     pattern_set_current(p, data);
     pattern_ui_lock(p, !active);
+}
+
+static void
+pattern_ui_export(GtkWidget *widget,
+                  pattern_t *p)
+{
+    GtkTreeIter iter;
+    pattern_data_t *data;
+
+    if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
+        return;
+
+    gtk_tree_model_get(GTK_TREE_MODEL(pattern_get_model(p)), &iter, PATTERN_COL_DATA, &data, -1);
+    if (!pattern_signal_count(pattern_data_get_signal(data)))
+    {
+        pattern_ui_dialog(GTK_WINDOW(pattern_get_ui(p)->window), GTK_MESSAGE_ERROR,
+                          APP_TITLE,
+                          "No signal samples available.");
+        return;
+    }
+
+    gchar *filename = pattern_ui_dialog_export(GTK_WINDOW(pattern_get_ui(p)->window));
+    if (filename)
+    {
+        if (!pattern_export(data, filename))
+        {
+            pattern_ui_dialog(GTK_WINDOW(pattern_get_ui(p)->window), GTK_MESSAGE_ERROR,
+                              APP_TITLE,
+                              "Unable to export the pattern data.");
+        }
+        g_free(filename);
+    }
 }
 
 static void
@@ -625,6 +659,7 @@ pattern_ui_lock(pattern_t *p,
     gboolean active = !lock;
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_down, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_up, active);
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_export, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_remove, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_clear, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->e_name, active);

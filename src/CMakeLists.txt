@@ -8,6 +8,8 @@ set(SOURCE_FILES
         pattern-color.h
         pattern-data.c
         pattern-data.h
+        pattern-export.c
+        pattern-export.h
         pattern-import.c
         pattern-import.h
         pattern-json.c

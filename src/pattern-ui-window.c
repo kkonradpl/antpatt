@@ -60,9 +60,9 @@ pattern_ui_window_new()
     gtk_button_set_image(GTK_BUTTON(ui->b_save), gtk_image_new_from_icon_name("document-save-as", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_save, TRUE, TRUE, 0);
 
-    ui->b_export = gtk_button_new_with_label("Export");
-    gtk_button_set_image(GTK_BUTTON(ui->b_export), gtk_image_new_from_icon_name("document-save-as", GTK_ICON_SIZE_BUTTON));
-    gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_export, TRUE, TRUE, 0);
+    ui->b_render = gtk_button_new_with_label("Render");
+    gtk_button_set_image(GTK_BUTTON(ui->b_render), gtk_image_new_from_icon_name("document-save-as", GTK_ICON_SIZE_BUTTON));
+    gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_render, TRUE, TRUE, 0);
 
     ui->b_detach = gtk_button_new_with_label("Detach");
     gtk_button_set_image(GTK_BUTTON(ui->b_detach), gtk_image_new_from_icon_name("view-restore", GTK_ICON_SIZE_BUTTON));
@@ -165,6 +165,10 @@ pattern_ui_window_new()
     gtk_cell_renderer_text_set_fixed_height_from_font(GTK_CELL_RENDERER_TEXT(ui->r_select), 1);
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(ui->c_select), ui->r_select, TRUE);
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->c_select, TRUE, TRUE, 0);
+
+    ui->b_export = gtk_button_new();
+    gtk_button_set_image(GTK_BUTTON(ui->b_export), gtk_image_new_from_icon_name("document-save", GTK_ICON_SIZE_MENU));
+    gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_export, FALSE, FALSE, 0);
 
     ui->b_remove = gtk_button_new();
     gtk_button_set_image(GTK_BUTTON(ui->b_remove), gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_MENU));

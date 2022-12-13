@@ -80,21 +80,23 @@ pattern_signal_interp(pattern_signal_t *s)
 {
     gint count = pattern_signal_count(s);
 
-    if(count >= 1152)
+    if(count >= 2048)
+        return 1;
+    else if(count >= 1024)
         return 2;
-    else if(count >= 576)
+    else if(count >= 512)
         return 4;
-    else if(count >= 288)
+    else if(count >= 256)
         return 8;
-    else if(count >= 144)
+    else if(count >= 128)
         return 16;
-    else if(count >= 72)
+    else if(count >= 64)
         return 32;
-    else if(count >= 36)
+    else if(count >= 32)
         return 64;
-    else if(count >= 18)
+    else if(count >= 16)
         return 128;
-    else if(count >= 9)
+    else if(count >= 8)
         return 256;
     else if(count >= 4)
         return 512;

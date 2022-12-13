@@ -18,8 +18,7 @@
 #include "pattern-ui-dialogs.h"
 #include "version.h"
 
-static void pattern_ui_dialog_save_response(GtkWidget*, gint, gpointer);
-static void pattern_ui_dialog_export_response(GtkWidget*, gint, gpointer);
+static void pattern_ui_dialog_file_chooser_response(GtkWidget*, gint, gpointer);
 static gboolean str_has_suffix(const gchar*, const gchar*);
 
 void
@@ -65,7 +64,7 @@ pattern_ui_dialog_open(GtkWindow *window)
                                          NULL);
 
     filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, "Antenna pattern project");
+    gtk_file_filter_set_name(filter, "Antenna pattern project (*.antp.gz, *.antp)");
     gtk_file_filter_add_pattern(filter, "*" APP_FILE_EXT);
     gtk_file_filter_add_pattern(filter, "*" APP_FILE_EXT APP_FILE_COMPRESS);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
@@ -82,7 +81,6 @@ pattern_ui_dialog_save(GtkWindow *window)
 {
     GtkWidget *dialog;
     GtkWidget *box;
-    GtkWidget *compression;
     GtkFileFilter *filter;
     gchar *ret = NULL;
 
@@ -98,89 +96,25 @@ pattern_ui_dialog_save(GtkWindow *window)
 
     box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
 
-    compression = gtk_check_button_new_with_label("Compress (.gz)");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(compression), TRUE);
-    gtk_box_pack_start(GTK_BOX(box), compression, FALSE, FALSE, 0);
-    g_object_set_data(G_OBJECT(dialog), "mtscan-compression", compression);
-
     gtk_widget_show_all(box);
     gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(dialog), box);
 
     filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, "Antenna pattern project");
-    gtk_file_filter_add_pattern(filter, "*" APP_FILE_EXT);
+    gtk_file_filter_set_name(filter, "Antenna pattern project (*.antp.gz)");
     gtk_file_filter_add_pattern(filter, "*" APP_FILE_EXT APP_FILE_COMPRESS);
+    g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(APP_FILE_EXT APP_FILE_COMPRESS), g_free);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_save_response), &ret);
+    filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Antenna pattern project (*.antp)");
+    gtk_file_filter_add_pattern(filter, "*" APP_FILE_EXT);
+    g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(APP_FILE_EXT), g_free);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &ret);
     while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
 
     return ret;
-}
-
-static void
-pattern_ui_dialog_save_response(GtkWidget *dialog,
-                                gint       response_id,
-                                gpointer   user_data)
-{
-    gchar **ret = (gchar**)user_data;
-    gchar *filename;
-    gboolean compress;
-    gboolean add_suffix;
-
-    if(response_id != GTK_RESPONSE_ACCEPT)
-    {
-        gtk_widget_destroy(dialog);
-        return;
-    }
-
-    if(!(filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog))))
-    {
-        pattern_ui_dialog(GTK_WINDOW(dialog),
-                          GTK_MESSAGE_ERROR,
-                          "Error",
-                          "No file selected.");
-        return;
-    }
-
-    compress = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_object_get_data(G_OBJECT(dialog), "mtscan-compression")));
-
-    if(compress)
-        add_suffix = !str_has_suffix(filename, APP_FILE_EXT APP_FILE_COMPRESS);
-    else
-        add_suffix = !str_has_suffix(filename, APP_FILE_EXT);
-
-    if(add_suffix)
-    {
-        if(!compress)
-        {
-            filename = (gchar*)g_realloc(filename, strlen(filename) + strlen(APP_FILE_EXT) + 1);
-            strcat(filename, APP_FILE_EXT);
-        }
-        else
-        {
-            if(str_has_suffix(filename, APP_FILE_EXT))
-            {
-                filename = (gchar*)g_realloc(filename, strlen(filename) + strlen(APP_FILE_COMPRESS) + 1);
-                strcat(filename, APP_FILE_COMPRESS);
-            }
-            else
-            {
-                filename = (gchar*)g_realloc(filename, strlen(filename) + strlen(APP_FILE_EXT APP_FILE_COMPRESS) + 1);
-                strcat(filename, APP_FILE_EXT APP_FILE_COMPRESS);
-            }
-        }
-
-        /* After adding the suffix, the GTK should check whether we may overwrite something. */
-        gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), filename);
-        gtk_dialog_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-        g_free(filename);
-        return;
-    }
-
-    *ret = filename;
-
-    gtk_widget_destroy(dialog);
 }
 
 GSList*
@@ -205,13 +139,13 @@ pattern_ui_dialog_import(GtkWindow *window)
 }
 
 gchar*
-pattern_ui_dialog_export(GtkWindow *window)
+pattern_ui_dialog_render(GtkWindow *window)
 {
     GtkWidget *dialog;
     GtkFileFilter *filter;
     gchar *filename = NULL;
 
-    dialog = gtk_file_chooser_dialog_new("Export pattern plot",
+    dialog = gtk_file_chooser_dialog_new("Render pattern plot",
                                          window,
                                          GTK_FILE_CHOOSER_ACTION_SAVE,
                                          "_Cancel", GTK_RESPONSE_CANCEL,
@@ -224,21 +158,58 @@ pattern_ui_dialog_export(GtkWindow *window)
     filter = gtk_file_filter_new();
     gtk_file_filter_set_name(filter, "PNG image");
     gtk_file_filter_add_pattern(filter, "*.png");
+    g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".png"), g_free);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_export_response), &filename);
+    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &filename);
+    while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
+
+    return filename;
+}
+
+gchar*
+pattern_ui_dialog_export(GtkWindow *window)
+{
+    GtkWidget *dialog;
+    GtkFileFilter *filter;
+    gchar *filename = NULL;
+
+    dialog = gtk_file_chooser_dialog_new("Export pattern data",
+                                         window,
+                                         GTK_FILE_CHOOSER_ACTION_SAVE,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Save", GTK_RESPONSE_ACCEPT,
+                                         NULL);
+
+    gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(dialog), TRUE);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+
+    filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "XDR-GTK file (*.xdrp)");
+    gtk_file_filter_add_pattern(filter, "*.xdrp");
+    g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".xdrp"), g_free);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Radiomobile file (*.ant)");
+    gtk_file_filter_add_pattern(filter, "*.ant");
+    g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".ant"), g_free);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &filename);
     while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
 
     return filename;
 }
 
 static void
-pattern_ui_dialog_export_response(GtkWidget *dialog,
-                                  gint       response_id,
-                                  gpointer   user_data)
+pattern_ui_dialog_file_chooser_response(GtkWidget *dialog,
+                                        gint       response_id,
+                                        gpointer   user_data)
 {
     gchar **ret = (gchar**)user_data;
     gchar *filename;
+    GtkFileFilter *filter;
 
     if(response_id != GTK_RESPONSE_ACCEPT)
     {
@@ -255,10 +226,12 @@ pattern_ui_dialog_export_response(GtkWidget *dialog,
         return;
     }
 
-    if(!str_has_suffix(filename, ".png"))
+    filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(dialog));
+    const gchar* ext = g_object_get_data(G_OBJECT(filter), "antpatt-ext");
+    if (!str_has_suffix(filename, ext))
     {
-        filename = (gchar*)g_realloc(filename, strlen(filename) + strlen(".png") + 1);
-        strcat(filename, ".png");
+        filename = (gchar*)g_realloc(filename, strlen(filename) + strlen(ext) + 1);
+        strcat(filename, ext);
 
         /* After adding the suffix, the GTK should check whether we may overwrite something. */
         gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), filename);

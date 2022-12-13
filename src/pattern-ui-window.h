@@ -37,7 +37,7 @@ typedef struct pattern_ui_window
     GtkWidget *b_new;
     GtkWidget *b_load;
     GtkWidget *b_save;
-    GtkWidget *b_export;
+    GtkWidget *b_render;
     GtkWidget *b_detach;
     GtkWidget *b_about;
 
@@ -64,6 +64,7 @@ typedef struct pattern_ui_window
     GtkWidget *b_up;
     GtkCellRenderer *r_select;
     GtkWidget *c_select;
+    GtkWidget *b_export;
     GtkWidget *b_remove;
     GtkWidget *b_clear;
 

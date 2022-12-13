@@ -17,6 +17,7 @@
 #include <json-c/json.h>
 #include <zlib.h>
 #include <string.h>
+#include <glib/gstdio.h>
 #include "pattern.h"
 #include "pattern-color.h"
 
@@ -334,7 +335,7 @@ pattern_json_save(pattern_t   *p,
     if(ext && !g_ascii_strcasecmp(ext, ".gz"))
         gzfp = gzopen(filename, "wb");
     else
-        fp = fopen(filename, "w");
+        fp = g_fopen(filename, "w");
 
     if(!gzfp && !fp)
         return FALSE;

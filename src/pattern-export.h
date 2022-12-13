@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -13,15 +13,11 @@
  *  GNU General Public License for more details.
  */
 
-#ifndef ANTPATT_PATTERN_UI_DIALOGS_H_
-#define ANTPATT_PATTERN_UI_DIALOGS_H_
+#ifndef ANTPATT_PATTERN_EXPORT_H_
+#define ANTPATT_PATTERN_EXPORT_H_
+#include "pattern-data.h"
 
-void pattern_ui_dialog(GtkWindow*, GtkMessageType, gchar*, gchar*, ...);
-gchar* pattern_ui_dialog_open(GtkWindow*);
-gchar* pattern_ui_dialog_save(GtkWindow*);
-GSList* pattern_ui_dialog_import(GtkWindow*);
-gchar* pattern_ui_dialog_render(GtkWindow*);
-gchar* pattern_ui_dialog_export(GtkWindow*);
-void pattern_ui_dialog_about(GtkWindow*);
+gboolean pattern_export(pattern_data_t*, const gchar*);
 
 #endif
+

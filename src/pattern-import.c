@@ -29,7 +29,7 @@ typedef struct pattern_import
     gint freq;
 } pattern_import_t;
 
-static gint pattern_import_xdrgtk(pattern_import_t*, FILE*);
+static gint pattern_import_xdrp(pattern_import_t*, FILE*);
 static gint pattern_import_mmanagal(pattern_import_t*, FILE*, const gchar*);
 static gint pattern_import_ant(pattern_import_t*, FILE*);
 static gint pattern_import_msi(pattern_import_t*, FILE*);
@@ -88,7 +88,7 @@ pattern_import(pattern_import_t *im,
         ret = pattern_import_msi(im, fp);
     /* Other: XDR-GTK pattern file */
     else
-        ret = pattern_import_xdrgtk(im, fp);
+        ret = pattern_import_xdrp(im, fp);
 
     fclose(fp);
 
@@ -99,8 +99,8 @@ pattern_import(pattern_import_t *im,
 }
 
 static gint
-pattern_import_xdrgtk(pattern_import_t *im,
-                      FILE             *fp)
+pattern_import_xdrp(pattern_import_t *im,
+                    FILE             *fp)
 {
     gchar buff[256];
     gdouble sample;

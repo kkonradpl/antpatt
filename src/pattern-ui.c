@@ -155,9 +155,9 @@ pattern_ui_create(pattern_t *p)
     g_signal_connect(ui->b_clear, "clicked", G_CALLBACK(pattern_ui_clear), p);
 
     g_signal_connect(ui->e_name, "changed", G_CALLBACK(pattern_ui_name), p);
-    g_signal_connect(ui->s_freq, "changed", G_CALLBACK(pattern_ui_freq), p);
+    g_signal_connect(ui->s_freq, "value-changed", G_CALLBACK(pattern_ui_freq), p);
     g_signal_connect(ui->s_freq, "output", G_CALLBACK(pattern_ui_format_freq), NULL);
-    g_signal_connect(ui->s_avg, "changed", G_CALLBACK(pattern_ui_avg), p);
+    g_signal_connect(ui->s_avg, "value-changed", G_CALLBACK(pattern_ui_avg), p);
     g_signal_connect(ui->s_avg, "output", G_CALLBACK(pattern_ui_format_avg), NULL);
     g_signal_connect(ui->b_color, "color-set", G_CALLBACK(pattern_ui_color), p);
     g_signal_connect(ui->b_color_next, "clicked", G_CALLBACK(pattern_ui_color_next), p);

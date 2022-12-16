@@ -22,23 +22,32 @@ gchar*
 pattern_misc_format_frequency(gint freq)
 {
     gchar buff[10];
+    const char *unit;
     size_t i;
 
-    if(freq < 1000)
+    if (freq < 1000)
     {
         return g_strdup_printf("%d kHz", freq);
     }
-    else
+
+    if (freq < 1000000)
     {
         g_snprintf(buff, sizeof(buff), "%.3f", freq / 1000.0);
-
-        for (i = strlen(buff) - 1; i >= 0 && buff[i] == '0'; i--);
-        if (i >= 0 && buff[i] == '.')
-            i++;
-        buff[i + 1] = '\0';
-
-        return g_strdup_printf("%s MHz", buff);
+        unit = "MHz";
     }
+    else
+    {
+        g_snprintf(buff, sizeof(buff), "%.6f", freq / 1000000.0);
+        unit = "GHz";
+    }
+
+    for (i = strlen(buff) - 1; i > 0 && buff[i] == '0'; i--);
+
+    if (buff[i] == '.')
+        i++;
+    buff[i + 1] = '\0';
+
+    return g_strdup_printf("%s %s", buff, unit);
 }
 
 gchar*

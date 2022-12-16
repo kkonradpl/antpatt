@@ -17,6 +17,9 @@
 #define ANTPATT_PATTERN_DATA_H_
 #include "pattern-signal.h"
 
+#define PATTERN_DATA_MIN_FREQ 0
+#define PATTERN_DATA_MAX_FREQ 9999999
+
 typedef struct pattern_data pattern_data_t;
 
 pattern_data_t* pattern_data_new(pattern_signal_t*);

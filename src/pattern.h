@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -19,6 +19,12 @@
 #include "pattern-ui-window.h"
 #include "pattern-data.h"
 
+#define PATTERN_MIN_SIZE 350
+#define PATTERN_MAX_SIZE 3000
+
+#define PATTERN_MIN_LINE 0.1
+#define PATTERN_MAX_LINE 2.0
+
 enum
 {
     PATTERN_COL_DATA = 0,
@@ -27,8 +33,9 @@ enum
 
 typedef struct pattern pattern_t;
 
-pattern_t* pattern_new();
+pattern_t* pattern_new(void);
 void pattern_free(pattern_t*);
+pattern_t* pattern_get_main_instance(void);
 
 GtkListStore*        pattern_get_model(pattern_t*);
 void                 pattern_set_ui(pattern_t*, pattern_ui_window_t*);
@@ -68,5 +75,8 @@ gint pattern_get_visible(pattern_t*);
 gdouble pattern_get_peak(pattern_t*);
 
 void pattern_hide(pattern_t*, pattern_data_t*, gboolean);
+
+void pattern_live_start(pattern_t*);
+void pattern_live_stop(pattern_t*);
 
 #endif

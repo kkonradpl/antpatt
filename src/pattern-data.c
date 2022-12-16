@@ -82,6 +82,8 @@ pattern_data_set_freq(pattern_data_t *data,
                       gint            value)
 {
     g_assert(data != NULL);
+    value = MIN(PATTERN_DATA_MAX_FREQ, value);
+    value = MAX(PATTERN_DATA_MIN_FREQ, value);
     data->freq = value;
 }
 

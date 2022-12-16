@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,6 +16,9 @@
 #ifndef ANTPATT_PATTERN_SIGNAL_H_
 #define ANTPATT_PATTERN_SIGNAL_H_
 
+#define PATTERN_SIGNAL_MIN_AVG 0
+#define PATTERN_SIGNAL_MAX_AVG 10
+
 enum
 {
     PATTERN_INTERP_LINEAR = 0,
@@ -26,7 +29,7 @@ enum
 
 typedef struct pattern_signal pattern_signal_t;
 
-pattern_signal_t* pattern_signal_new();
+pattern_signal_t* pattern_signal_new(void);
 void pattern_signal_free(pattern_signal_t *s);
 gint pattern_signal_count(pattern_signal_t*);
 gint pattern_signal_interp(pattern_signal_t*);

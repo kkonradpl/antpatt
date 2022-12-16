@@ -12,6 +12,8 @@ set(SOURCE_FILES
         pattern-export.h
         pattern-import.c
         pattern-import.h
+        pattern-ipc.c
+        pattern-ipc.h
         pattern-json.c
         pattern-json.h
         pattern-misc.c

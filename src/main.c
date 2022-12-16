@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -15,16 +15,66 @@
 
 #include <gtk/gtk.h>
 #include "pattern.h"
+#include "pattern-ipc.h"
+#include "pattern-json.h"
 
 #ifdef G_OS_WIN32
 #include "win32.h"
 #endif
 
+typedef struct antpatt_arg
+{
+    gboolean interactive;
+    const char *project;
+} antpatt_arg_t;
+
+static antpatt_arg_t args =
+{
+    .interactive = FALSE,
+    .project = NULL
+};
+
+static void
+antpatt_usage(void)
+{
+    printf("antpatt " APP_VERSION " - antenna pattern plotting and analysis software\n");
+    printf("usage: antpatt [-i] project\n");
+    printf("options:\n");
+    printf("  -i  interactive console mode\n");
+}
+
+static void
+parse_args(gint   argc,
+           gchar *argv[])
+{
+    gint c;
+    while ((c = getopt(argc, argv, "hi")) != -1)
+    {
+        switch (c)
+        {
+            case 'h':
+                antpatt_usage();
+                exit(0);
+
+            case 'i':
+                args.interactive = TRUE;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    if (optind == argc - 1)
+        args.project = argv[optind];
+}
+
 gint
 main(gint   argc,
      gchar *argv[])
 {
-    pattern_t *p;
+    pattern_t *p = NULL;
+    gchar *error = NULL;
 
 #ifdef G_OS_WIN32
     win32_init();
@@ -32,9 +82,25 @@ main(gint   argc,
 
     gtk_disable_setlocale();
     gtk_init(&argc, &argv);
+    parse_args(argc, argv);
 
-    p = pattern_new();
+    if (args.project)
+    {
+        p = pattern_json_load(args.project, &error);
+        if (p == NULL)
+        {
+            fprintf(stderr, "Error: %s\n", error);
+            g_free(error);
+        }
+    }
+
+    if (p == NULL)
+        p = pattern_new();
+
     pattern_set_ui(p, pattern_ui_window_new());
+
+    if (args.interactive)
+        pattern_ipc_init();
 
     gtk_main();
 

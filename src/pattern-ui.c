@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 #include "pattern-color.h"
 #include "pattern-json.h"
 #include "pattern-export.h"
+#include "pattern-ipc.h"
 
 #define UI_DRAG_URI_LIST_ID 0
 
@@ -68,7 +69,7 @@ static void pattern_ui_rotate_cw_fast(GtkWidget*, pattern_t*);
 static void pattern_ui_fill(GtkWidget*, pattern_t*);
 static void pattern_ui_rev(GtkWidget*, pattern_t*);
 static void pattern_ui_hide(GtkWidget*, pattern_t*);
-static void pattern_ui_lock(pattern_t*, gboolean);
+static void pattern_ui_sync(pattern_t*, gboolean, gboolean);
 
 static void pattern_ui_drag_data_received(GtkWidget*, GdkDragContext*, gint, gint, GtkSelectionData*, guint, guint, gpointer);
 
@@ -176,7 +177,7 @@ pattern_ui_create(pattern_t *p)
     g_signal_connect(ui->window_plot, "drag-data-received", G_CALLBACK(pattern_ui_drag_data_received), p);
     g_signal_connect(ui->window, "drag-data-received", G_CALLBACK(pattern_ui_drag_data_received), p);
 
-    pattern_ui_lock(p, TRUE);
+    pattern_ui_sync(p, TRUE, FALSE);
     g_signal_emit_by_name(ui->s_size, "changed", p);
 
     if(gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(p)), NULL))
@@ -418,46 +419,15 @@ pattern_ui_select(GtkWidget *widget,
 {
     GtkTreeIter iter;
     pattern_data_t *data = NULL;
-    pattern_signal_t *signal;
-    gboolean active;
+    gboolean active = gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter);
 
-    active = gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter);
-    if(active)
+    if (active)
     {
         gtk_tree_model_get(GTK_TREE_MODEL(pattern_get_model(p)), &iter, PATTERN_COL_DATA, &data, -1);
-        signal = pattern_data_get_signal(data);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
-        gtk_entry_set_text(GTK_ENTRY(pattern_get_ui(p)->e_name), pattern_data_get_name(data));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_freq), pattern_data_get_freq(data));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_avg), pattern_signal_get_avg(signal));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
-        gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(pattern_get_ui(p)->b_color), pattern_data_get_color(data));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_hide), pattern_data_get_hide(data));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_fill), pattern_data_get_fill(data));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_rev), pattern_signal_get_rev(signal));
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
     }
 
     pattern_set_current(p, data);
-    pattern_ui_lock(p, !active);
+    pattern_ui_sync(p, !active, FALSE);
 }
 
 static void
@@ -653,55 +623,44 @@ pattern_ui_hide(GtkWidget *widget,
 }
 
 static void
-pattern_ui_lock(pattern_t *p,
-                gboolean   lock)
+pattern_ui_sync(pattern_t *p,
+                gboolean   lock,
+                gboolean   live)
 {
     gboolean active = !lock;
+
+    pattern_ui_sync_name(p, FALSE);
+    pattern_ui_sync_freq(p, FALSE);
+    pattern_ui_sync_avg(p, FALSE);
+    pattern_ui_sync_color(p, FALSE);
+    pattern_ui_sync_hide(p, FALSE);
+    pattern_ui_sync_fill(p, FALSE);
+    pattern_ui_sync_rev(p, FALSE);
+
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_add, (lock && live) ? FALSE : TRUE);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_down, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_up, active);
+    gtk_widget_set_sensitive(pattern_get_ui(p)->box_select, (lock && live) ? FALSE : TRUE);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_export, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_remove, active);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_clear, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->e_name, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->s_freq, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->s_avg, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_color, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_color_next, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_reset, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_ccw_fast, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_ccw, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_peak, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_cw, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_cw_fast, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_fill, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_rev, active);
-    gtk_widget_set_sensitive(pattern_get_ui(p)->b_hide, active);
 
-    if(lock)
+    if (!live)
     {
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
-        gtk_entry_set_text(GTK_ENTRY(pattern_get_ui(p)->e_name), "");
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_freq), 0);
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_avg), 0);
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_fill), FALSE);
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_rev), FALSE);
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
-
-        g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_hide), FALSE);
-        g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->e_name, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->s_freq, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->s_avg, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_color, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_color_next, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_reset, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_ccw_fast, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_ccw, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_peak, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_cw, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rotate_cw_fast, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_fill, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_rev, active);
+        gtk_widget_set_sensitive(pattern_get_ui(p)->b_hide, active);
     }
 }
 
@@ -783,16 +742,14 @@ pattern_ui_format_avg(GtkSpinButton *widget,
 {
     GtkAdjustment *adj = gtk_spin_button_get_adjustment(widget);
     gint value = (gint)gtk_adjustment_get_value(adj);
-    gchar text[8];
 
-    if(!value)
+    if (!value)
     {
         gtk_entry_set_text(GTK_ENTRY(widget), "");
         return TRUE;
     }
-    g_snprintf(text, sizeof(text), "%d", value);
-    gtk_entry_set_text(GTK_ENTRY(widget), text);
-    return TRUE;
+
+    return FALSE;
 }
 
 static gboolean
@@ -802,7 +759,7 @@ pattern_ui_format_freq(GtkSpinButton *widget,
     GtkAdjustment *adj = gtk_spin_button_get_adjustment(widget);
     gint value = (gint)gtk_adjustment_get_value(adj);
 
-    if(!value)
+    if (!value)
     {
         gtk_entry_set_text(GTK_ENTRY(widget), "");
         return TRUE;
@@ -883,3 +840,138 @@ pattern_ui_read(pattern_t *p,
         gtk_widget_queue_draw(pattern_get_ui(p)->plot);
     }
 }
+
+void
+pattern_ui_sync_name(pattern_t *p,
+                     gboolean   redraw)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    const gchar *name = data ? pattern_data_get_name(data) : "";
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
+    gtk_entry_set_text(GTK_ENTRY(pattern_get_ui(p)->e_name), name);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+        gtk_widget_queue_draw(pattern_get_ui(p)->c_select);
+    }
+}
+
+void
+pattern_ui_sync_freq(pattern_t *p,
+                     gboolean   redraw)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    gint freq = data ? pattern_data_get_freq(data) : 0;
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_freq), freq);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+    }
+}
+
+void
+pattern_ui_sync_avg(pattern_t *p,
+                    gboolean   redraw)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    gint avg = data ? pattern_signal_get_avg(pattern_data_get_signal(data)) : 0;
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_avg), avg);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+    }
+}
+
+void
+pattern_ui_sync_color(pattern_t *p,
+                      gboolean   redraw)
+{
+    static const GdkRGBA default_color = {0};
+    pattern_data_t *data = pattern_get_current(p);
+    const GdkRGBA *color = data ? pattern_data_get_color(data) : &default_color;
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(pattern_get_ui(p)->b_color), color);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+    }
+}
+
+void
+pattern_ui_sync_hide(pattern_t *p,
+                     gboolean   redraw)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    gboolean hide = data ? pattern_data_get_hide(data) : FALSE;
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_hide), hide);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+    }
+}
+
+void
+pattern_ui_sync_fill(pattern_t *p,
+                     gboolean   redraw)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    gboolean fill = data ? pattern_data_get_fill(data) : FALSE;
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_fill), fill);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+    }
+}
+
+void
+pattern_ui_sync_rev(pattern_t *p,
+                    gboolean   redraw)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    gboolean rev = data ? pattern_signal_get_rev(pattern_data_get_signal(data)) : FALSE;
+    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_rev), rev);
+    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
+
+    if (redraw)
+    {
+        gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+    }
+}
+
+void
+pattern_ui_live(pattern_t *p,
+                gboolean   live)
+{
+    if (live)
+    {
+        gint index = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(p)), NULL) - 1;
+        gtk_combo_box_set_active(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), index);
+        pattern_ui_sync(p, TRUE, TRUE);
+    }
+    else
+    {
+        pattern_data_t *data = pattern_get_current(p);
+        pattern_signal_set_finished(pattern_data_get_signal(data));
+        pattern_ui_sync(p, FALSE, FALSE);
+    }
+
+    gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+}
+

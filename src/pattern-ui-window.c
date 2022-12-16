@@ -16,6 +16,9 @@
 #include <gtk/gtk.h>
 #include "version.h"
 #include "pattern-ui-window.h"
+#include "pattern-data.h"
+#include "pattern-signal.h"
+#include "pattern.h"
 
 static gboolean pattern_ui_window_delete(pattern_ui_window_t*);
 static gboolean pattern_ui_window_attach(pattern_ui_window_t*);
@@ -78,7 +81,7 @@ pattern_ui_window_new()
     ui->l_size = gtk_label_new("Size:");
     gtk_box_pack_start(GTK_BOX(ui->box_header1), ui->l_size, FALSE, FALSE, 0);
 
-    ui->s_size = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, 350.0, 2000.0, 10.0, 25.0, 0.0)), 0, 0);
+    ui->s_size = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, PATTERN_MIN_SIZE, PATTERN_MAX_SIZE, 10.0, 25.0, 0.0)), 0, 0);
     gtk_box_pack_start(GTK_BOX(ui->box_header1), ui->s_size, FALSE, FALSE, 0);
 
     ui->l_title = gtk_label_new("Title:");
@@ -100,7 +103,7 @@ pattern_ui_window_new()
     ui->l_line = gtk_label_new("Line:");
     gtk_box_pack_start(GTK_BOX(ui->box_header1), ui->l_line, FALSE, FALSE, 0);
 
-    ui->s_line = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, 0.1, 2.0, 0.1, 0.2, 0.0)), 0, 1);
+    ui->s_line = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, PATTERN_MIN_LINE, PATTERN_MAX_LINE, 0.1, 0.2, 0.0)), 0, 1);
     gtk_box_pack_start(GTK_BOX(ui->box_header1), ui->s_line, FALSE, FALSE, 0);
 
     ui->box_header2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
@@ -192,13 +195,13 @@ pattern_ui_window_new()
     ui->l_freq = gtk_label_new("Freq:");
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->l_freq, FALSE, FALSE, 0);
 
-    ui->s_freq = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, 0.0, 9999999.0, 1000.0, 10000.0, 0.0)), 0, 0);
+    ui->s_freq = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, PATTERN_DATA_MIN_FREQ, PATTERN_DATA_MAX_FREQ, 1000.0, 10000.0, 0.0)), 0, 0);
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->s_freq, FALSE, FALSE, 0);
 
     ui->l_avg = gtk_label_new("Avg:");
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->l_avg, FALSE, FALSE, 0);
 
-    ui->s_avg = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, 0.0, 10.0, 1.0, 2.0, 0.0)), 0, 0);
+    ui->s_avg = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0.0, PATTERN_SIGNAL_MIN_AVG, PATTERN_SIGNAL_MAX_AVG, 1.0, 2.0, 0.0)), 0, 0);
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->s_avg, FALSE, FALSE, 0);
 
     ui->b_color = gtk_color_button_new();

@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -17,6 +17,7 @@
 #include <math.h>
 #include "pattern.h"
 #include "pattern-ui.h"
+#include "pattern-ipc.h"
 
 /* Default settings */
 #define PATTERN_DEFAULT_SIZE       600
@@ -47,16 +48,17 @@ typedef struct pattern
 
     gint      focus_idx;
     gint      rotating_idx;
-
     gint      visible;
-    gdouble   peak;
 } pattern_t;
+
+static pattern_t *main_instance = NULL;
 
 static gboolean pattern_set_interp_foreach(GtkTreeModel*, GtkTreePath*, GtkTreeIter*, gpointer);
 
 pattern_t*
 pattern_new()
 {
+    static gboolean first = TRUE;
     pattern_t *p = g_malloc(sizeof(pattern_t));
 
     p->ui = NULL;
@@ -74,7 +76,13 @@ pattern_new()
     p->legend = PATTERN_DEFAULT_LEGEND;
 
     p->visible = 0;
-    p->peak = NAN;
+
+    if (first)
+    {
+        main_instance = p;
+        first = FALSE;
+    }
+
     return p;
 }
 
@@ -85,6 +93,18 @@ pattern_free(pattern_t *p)
     g_free(p->title);
     g_free(p->ui);
     g_free(p);
+
+    if (main_instance == p)
+    {
+        main_instance = NULL;
+        pattern_ipc_cleanup();
+    }
+}
+
+pattern_t*
+pattern_get_main_instance()
+{
+    return main_instance;
 }
 
 GtkListStore*
@@ -119,9 +139,6 @@ pattern_add(pattern_t      *p,
 {
     gtk_list_store_insert_with_values(p->model, NULL, -1, PATTERN_COL_DATA, data, -1);
 
-    if(isnan(p->peak) || p->peak < pattern_signal_get_peak(pattern_data_get_signal(data)))
-        p->peak = pattern_signal_get_peak(pattern_data_get_signal(data));
-
     if(!pattern_data_get_hide(data))
         p->visible++;
 
@@ -133,7 +150,6 @@ pattern_remove(pattern_t   *p,
                GtkTreeIter *remove)
 {
     pattern_data_t *data;
-    GtkTreeIter iter;
     gboolean visible;
 
     gtk_tree_model_get(GTK_TREE_MODEL(p->model), remove,
@@ -142,21 +158,9 @@ pattern_remove(pattern_t   *p,
     visible = !pattern_data_get_hide(data);
     pattern_data_free(data);
     gtk_list_store_remove(p->model, remove);
-    p->peak = NAN;
 
     if(p->current == data)
         pattern_set_current(p, NULL);
-
-    if(gtk_tree_model_get_iter_first(GTK_TREE_MODEL(p->model), &iter))
-    {
-        do
-        {
-            gtk_tree_model_get(GTK_TREE_MODEL(p->model), &iter, PATTERN_COL_DATA, &data, -1);
-
-            if(isnan(p->peak) || p->peak < pattern_signal_get_peak(pattern_data_get_signal(data)))
-                p->peak = pattern_signal_get_peak(pattern_data_get_signal(data));
-        } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(p->model), &iter));
-    }
 
     if(visible)
         p->visible--;
@@ -168,20 +172,21 @@ pattern_clear(pattern_t *p)
     pattern_data_t *data;
     GtkTreeIter iter;
 
-    if(gtk_tree_model_get_iter_first(GTK_TREE_MODEL(p->model), &iter))
+    if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(p->model), &iter))
     {
-        do
-        {
-            gtk_tree_model_get(GTK_TREE_MODEL(p->model), &iter,
-                               PATTERN_COL_DATA, &data, -1);
-            pattern_data_free(data);
-        } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(p->model), &iter));
+        return;
     }
+
+    do
+    {
+        gtk_tree_model_get(GTK_TREE_MODEL(p->model), &iter,
+                           PATTERN_COL_DATA, &data, -1);
+        pattern_data_free(data);
+    } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(p->model), &iter));
 
     gtk_list_store_clear(p->model);
     pattern_set_current(p, NULL);
     p->visible = 0;
-    p->peak = NAN;
 }
 
 void
@@ -207,8 +212,9 @@ pattern_set_size(pattern_t *p,
                  gint       value)
 {
     g_assert(p != NULL);
-    if(value > 0)
-        p->size = value;
+    value = MIN(PATTERN_MAX_SIZE, value);
+    value = MAX(PATTERN_MIN_SIZE, value);
+    p->size = value;
 }
 
 gint
@@ -256,6 +262,8 @@ pattern_set_line(pattern_t *p,
                  gdouble    value)
 {
     g_assert(p != NULL);
+    value = MIN(PATTERN_MAX_LINE, value);
+    value = MAX(PATTERN_MIN_LINE, value);
     p->line = value;
 }
 
@@ -397,7 +405,22 @@ gdouble
 pattern_get_peak(pattern_t *p)
 {
     g_assert(p != NULL);
-    return p->peak;
+    pattern_data_t *data;
+    GtkTreeIter iter;
+    gdouble peak = NAN;
+
+    if(gtk_tree_model_get_iter_first(GTK_TREE_MODEL(p->model), &iter))
+    {
+        do
+        {
+            gtk_tree_model_get(GTK_TREE_MODEL(p->model), &iter, PATTERN_COL_DATA, &data, -1);
+
+            if(isnan(peak) || peak < pattern_signal_get_peak(pattern_data_get_signal(data)))
+                peak = pattern_signal_get_peak(pattern_data_get_signal(data));
+        } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(p->model), &iter));
+    }
+
+    return peak;
 }
 
 void

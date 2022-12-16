@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -80,30 +80,28 @@ pattern_signal_interp(pattern_signal_t *s)
 {
     gint count = pattern_signal_count(s);
 
-    if(count >= 2048)
+    if(count >= 1024)
         return 1;
-    else if(count >= 1024)
-        return 2;
     else if(count >= 512)
-        return 4;
+        return 2;
     else if(count >= 256)
-        return 8;
+        return 4;
     else if(count >= 128)
-        return 16;
+        return 8;
     else if(count >= 64)
-        return 32;
+        return 16;
     else if(count >= 32)
-        return 64;
+        return 32;
     else if(count >= 16)
-        return 128;
+        return 64;
     else if(count >= 8)
-        return 256;
+        return 128;
     else if(count >= 4)
-        return 512;
+        return 256;
     else if(count >= 2)
-        return 1024;
+        return 512;
     else
-        return 2048;
+        return 1024;
 }
 
 void
@@ -267,6 +265,8 @@ pattern_signal_set_avg(pattern_signal_t *s,
                        gint              avg)
 {
     g_assert(s != NULL);
+    avg = MIN(PATTERN_SIGNAL_MAX_AVG, avg);
+    avg = MAX(PATTERN_SIGNAL_MIN_AVG, avg);
     if(s->avg != avg)
     {
         s->avg = avg;
@@ -385,7 +385,6 @@ pattern_signal_rotate_reset(pattern_signal_t *s)
 static void
 pattern_signal_interp_init(pattern_signal_t *s)
 {
-
     gdouble *x;
     gdouble *y;
     gint idx, i;

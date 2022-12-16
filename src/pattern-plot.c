@@ -48,6 +48,7 @@ typedef struct
     gboolean legend;
     gdouble offset;
     gdouble radius;
+    gdouble peak;
 } pattern_plot_t;
 
 static void pattern_plot_cairo(cairo_t*, pattern_t*);
@@ -91,6 +92,7 @@ pattern_plot_cairo(cairo_t   *cr,
 
     plot.offset = plot.width/(PATTERN_BASE_SIZE/PATTERN_OFFSET);
     plot.radius = plot.width/2.0 - plot.offset;
+    plot.peak = plot.norm ? NAN : pattern_get_peak(p);
 
     /* clear the canvas */
     cairo_set_source_rgb(cr, (plot.black ? 0.0 : 1.0), (plot.black ? 0.0 : 1.0), (plot.black ? 0.0 : 1.0));
@@ -268,12 +270,12 @@ pattern_plot_radiation(cairo_t        *cr,
         do
         {
             gtk_tree_model_get(GTK_TREE_MODEL(pattern_get_model(p)), &iter, PATTERN_COL_DATA, &data, -1);
-            s = pattern_data_get_signal(data);
 
             if(pattern_data_get_hide(data))
                 continue;
-            if(!pattern_signal_count(s))
-                continue;
+
+            if(plot->legend)
+                pattern_plot_legend(cr, plot, data, pattern_get_visible(p), i);
 
             if(i == 0)
             {
@@ -288,11 +290,8 @@ pattern_plot_radiation(cairo_t        *cr,
             pattern_plot_radiation_data(cr,
                                         plot,
                                         data,
-                                        (plot->norm ? pattern_signal_get_peak(pattern_data_get_signal(data)) : pattern_get_peak(p)),
+                                        (plot->norm ? pattern_signal_get_peak(pattern_data_get_signal(data)) : plot->peak),
                                         line_width);
-
-            if(plot->legend)
-                pattern_plot_legend(cr, plot, data, pattern_get_visible(p), i);
 
             i++;
         } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(p)), &iter));
@@ -313,12 +312,16 @@ pattern_plot_radiation_data(cairo_t        *cr,
                             gdouble         line_width)
 {
     gdouble x, y, len, ang;
-    gint count, i, j;
+    gint i, j;
     gdouble sample;
     gboolean finished;
     pattern_signal_t *s = pattern_data_get_signal(data);
     GdkRGBA *color = pattern_data_get_color(data);
     gint interp = pattern_signal_interp(s);
+    gint count = pattern_signal_count(s);
+
+    if (!count)
+        return;
 
     cairo_set_line_width(cr, line_width);
     cairo_set_source_rgba(cr,
@@ -327,24 +330,23 @@ pattern_plot_radiation_data(cairo_t        *cr,
                           color->blue,
                           PATTERN_PLOT_FG_ALPHA);
 
-    count = pattern_signal_count(s);
     finished = pattern_signal_get_finished(s);
 
     for(i=0; i<count; i++)
     {
         for(j=0; j<interp; j++)
         {
-            if(finished)
-                sample = pattern_signal_get_sample_interp(s, i, j/(gdouble)interp);
-            else
-                sample = pattern_signal_get_sample(s, i);
+            /* We want to start from the first sample */
+            gint idx = i - pattern_signal_get_rotate(s);
+
+            sample = pattern_signal_get_sample_interp(s, idx, j/(gdouble)interp);
             len = plot->radius * pattern_plot_signal(plot->scale, sample - peak);
-            ang = M_PI - (i*interp + j)/(count * (gdouble)interp)*2.0*M_PI;
+            ang = M_PI - (idx*interp + j)/(count * (gdouble)interp)*2.0*M_PI;
             x = plot->offset + plot->radius + sin(ang)*len;
             y = plot->offset + plot->radius + cos(ang)*len;
             cairo_line_to(cr, x, y);
 
-            if(!finished)
+            if (i == count-1 && !finished)
                 break;
         }
     }
@@ -458,7 +460,7 @@ pattern_plot_pointer(cairo_t        *cr,
 {
     pattern_signal_t *s = pattern_data_get_signal(data);
     gint count = pattern_signal_count(s);
-    gdouble peak = (plot->norm ? pattern_signal_get_peak(s) : pattern_get_peak(p));
+    gdouble peak = (plot->norm ? pattern_signal_get_peak(s) : plot->peak);
     gdouble value = pattern_signal_get_sample(s, pattern_get_focus_idx(p));
     gdouble line_width = plot->width / (PATTERN_BASE_SIZE / PATTERN_PLOT_LINE_WIDTH);
     gdouble len = plot->radius * pattern_plot_signal(plot->scale, value - peak);
@@ -482,7 +484,7 @@ pattern_plot_info(cairo_t        *cr,
     gint count = pattern_signal_count(s);
     gint idx =  pattern_get_focus_idx(p);
     gdouble angle = idx/(gdouble)count*360.0;
-    gdouble peak = (pattern_get_normalize(p) ? pattern_signal_get_peak(pattern_data_get_signal(data)) : pattern_get_peak(p));
+    gdouble peak = (plot->norm ? pattern_signal_get_peak(pattern_data_get_signal(data)) : plot->peak);
     GdkRGBA *color = pattern_data_get_color(data);
     gint offset = (gint)(plot->width/(PATTERN_BASE_SIZE/(PATTERN_OFFSET/4.0)));
     gint font_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
@@ -548,6 +550,9 @@ pattern_plot_motion(GtkWidget      *widget,
     radius = width/2.0 - offset + line_width;
 
     count = pattern_signal_count(pattern_data_get_signal(data));
+    if (!count)
+        return TRUE;
+
     x = event->x - (offset + radius);
     y = event->y - (offset + radius);
     angle = RAD2DEG(atan2(y,x) + M_PI / 2.0);

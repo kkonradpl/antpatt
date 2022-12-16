@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -18,5 +18,15 @@
 #include "pattern.h"
 
 void pattern_ui_create(pattern_t*);
+
+void pattern_ui_sync_name(pattern_t*, gboolean);
+void pattern_ui_sync_freq(pattern_t*, gboolean);
+void pattern_ui_sync_avg(pattern_t*, gboolean);
+void pattern_ui_sync_color(pattern_t*, gboolean);
+void pattern_ui_sync_hide(pattern_t*, gboolean);
+void pattern_ui_sync_fill(pattern_t*, gboolean);
+void pattern_ui_sync_rev(pattern_t*, gboolean);
+
+void pattern_ui_live(pattern_t*, gboolean);
 
 #endif

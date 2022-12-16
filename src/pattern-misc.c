@@ -73,6 +73,9 @@ pattern_misc_info_all(pattern_t *p,
 
             s = pattern_data_get_signal(data);
             count = pattern_signal_count(s);
+            if (!count)
+                continue;
+
             x = angle/360.0 * count;
             peak = (pattern_get_normalize(p) ? pattern_signal_get_peak(pattern_data_get_signal(data)) : pattern_get_peak(p)),
             color = pattern_color_to_string(pattern_data_get_color(data));

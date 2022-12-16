@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ enum
 
 typedef struct pattern_import pattern_import_t;
 
-pattern_import_t* pattern_import_new();
+pattern_import_t* pattern_import_new(void);
 void              pattern_import_free(pattern_import_t*, gboolean);
 gint              pattern_import(pattern_import_t*, const gchar*);
 

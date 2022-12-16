@@ -473,6 +473,13 @@ pattern_ui_remove(GtkWidget *widget,
     if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
         return;
 
+    if (!pattern_ui_dialog_yesno(GTK_WINDOW(pattern_get_ui(p)->window),
+                                 "Remove pattern data",
+                                 "Do you really want to remove current pattern data?"))
+    {
+        return;
+    }
+
     next = iter;
     if(gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(p)), &next))
         gtk_combo_box_set_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &next);
@@ -493,6 +500,13 @@ static void
 pattern_ui_clear(GtkWidget *widget,
                  pattern_t *p)
 {
+    if (!pattern_ui_dialog_yesno(GTK_WINDOW(pattern_get_ui(p)->window),
+                                 "Remove all pattern data",
+                                 "Do you really want to remove all pattern data?"))
+    {
+        return;
+    }
+
     pattern_clear(p);
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -502,6 +516,7 @@ pattern_ui_name(GtkWidget *widget,
                 pattern_t *p)
 {
     GtkTreeIter iter;
+
     if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
         return;
 

@@ -49,6 +49,27 @@ pattern_ui_dialog(GtkWindow      *window,
     g_free(msg);
 }
 
+gboolean
+pattern_ui_dialog_yesno(GtkWindow   *parent,
+                        const gchar *title,
+                        const gchar *text)
+{
+    GtkWidget *dialog;
+    gint response;
+
+    dialog = gtk_message_dialog_new(parent,
+                                    GTK_DIALOG_MODAL,
+                                    GTK_MESSAGE_QUESTION,
+                                    GTK_BUTTONS_YES_NO,
+                                    NULL);
+
+    gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), text);
+    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    response = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return response == GTK_RESPONSE_YES;
+}
+
 gchar*
 pattern_ui_dialog_open(GtkWindow *window)
 {

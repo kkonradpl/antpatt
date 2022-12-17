@@ -24,6 +24,7 @@
 #define PATTERN_FONT_SIZE_TITLE  16.0
 #define PATTERN_FONT_SIZE_SCALE  11.0
 #define PATTERN_FONT_SIZE_LEGEND 13.0
+#define PATTERN_FONT_SIZE_FREQ   15.0
 #define PATTERN_LEGEND_SPACING    4.0
 #define PATTERN_ANGLE_LABEL_OFF  15.0
 #define PATTERN_LINE_WIDTH        1.0
@@ -432,7 +433,7 @@ pattern_plot_frequency(cairo_t        *cr,
     gdouble x, y;
 
     cairo_set_source_rgb(cr, (plot->black ? 1.0 : 0.0), (plot->black ? 1.0 : 0.0), (plot->black ? 1.0 : 0.0));
-    cairo_set_font_size(cr, plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
+    cairo_set_font_size(cr, plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_FREQ));
     cairo_text_extents(cr, text, &extents);
 
     x = plot->width-extents.width-offset;

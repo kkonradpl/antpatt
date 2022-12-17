@@ -131,7 +131,7 @@ pattern_plot_title(cairo_t        *cr,
 
     x = (plot->width-extents.width)/2.0;
     y = font_height+(plot->width/(PATTERN_BASE_SIZE/2.0));
-    cairo_move_to(cr, x, y);
+    cairo_move_to(cr, round(x), round(y));
     cairo_show_text(cr, plot->title);
     cairo_stroke(cr);
 }
@@ -192,7 +192,10 @@ pattern_plot_grid(cairo_t        *cr,
         cairo_stroke_preserve(cr);
         g_snprintf(text, sizeof(text), "%d", scales[i]);
         cairo_text_extents(cr, text, &extents);
-        cairo_rel_move_to(cr, -(extents.width/2.0 + extents.x_bearing)-0.5, (font_height));
+        cairo_get_current_point(cr, &x, &y);
+        x += -(extents.width/2.0 + extents.x_bearing)-0.5;
+        y += font_height;
+        cairo_move_to(cr, round(x), round(y));
         cairo_show_text(cr, text);
         cairo_stroke(cr);
     }
@@ -244,7 +247,7 @@ pattern_plot_grid(cairo_t        *cr,
             y -= extents.height/2.0 + extents.y_bearing;
 
             cairo_set_source_rgb(cr, (plot->black ? 0.75 : 0.25), (plot->black ? 0.75 : 0.25), (plot->black ? 0.75 : 0.25));
-            cairo_move_to(cr, x, y);
+            cairo_move_to(cr, round(x), round(y));
             cairo_show_text(cr, text);
             cairo_stroke(cr);
         }
@@ -409,8 +412,11 @@ pattern_plot_legend(cairo_t        *cr,
                           color->blue,
                           1.0);
 
+    x += font_height+spacing+line_height;
+    y += font_height-line_height;
+
     cairo_set_font_size(cr, font_height);
-    cairo_move_to(cr, x+font_height+spacing+line_height, y+font_height-line_height);
+    cairo_move_to(cr, round(x), round(y));
     cairo_show_text(cr, pattern_data_get_name(data));
     cairo_stroke(cr);
 }
@@ -423,11 +429,15 @@ pattern_plot_frequency(cairo_t        *cr,
     gdouble offset = plot->width/(PATTERN_BASE_SIZE/(PATTERN_OFFSET/4.0));
     cairo_text_extents_t extents;
     gchar *text = pattern_misc_format_frequency(freq);
+    gdouble x, y;
 
     cairo_set_source_rgb(cr, (plot->black ? 1.0 : 0.0), (plot->black ? 1.0 : 0.0), (plot->black ? 1.0 : 0.0));
     cairo_set_font_size(cr, plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
     cairo_text_extents(cr, text, &extents);
-    cairo_move_to(cr, plot->width-extents.width-offset, plot->width-offset);
+
+    x = plot->width-extents.width-offset;
+    y = plot->width-offset;
+    cairo_move_to(cr, round(x), round(y));
     cairo_show_text(cr, text);
     cairo_stroke(cr);
 
@@ -504,19 +514,19 @@ pattern_plot_info(cairo_t        *cr,
     x = offset;
 
     y = (gint)plot->offset+spacing;
-    cairo_move_to(cr, x, y);
+    cairo_move_to(cr, round(x), round(y));
     g_snprintf(buff, sizeof(buff), "Angle: %.1f°", angle);
     cairo_show_text(cr, buff);
     cairo_stroke(cr);
 
     y += font_height+spacing;
-    cairo_move_to(cr, x, y);
+    cairo_move_to(cr, round(x), round(y));
     g_snprintf(buff, sizeof(buff), "Val: %.1f dB", pattern_signal_get_sample(s, idx));
     cairo_show_text(cr, buff);
     cairo_stroke(cr);
 
     y += font_height+spacing;
-    cairo_move_to(cr, x, y);
+    cairo_move_to(cr, round(x), round(y));
     g_snprintf(buff, sizeof(buff), "Att: %.1f dB", pattern_signal_get_sample(s, idx) - peak);
     cairo_show_text(cr, buff);
     cairo_stroke(cr);

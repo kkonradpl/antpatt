@@ -14,6 +14,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <getopt.h>
 #include "pattern.h"
 #include "pattern-ipc.h"
 #include "pattern-json.h"

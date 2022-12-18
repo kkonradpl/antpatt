@@ -32,8 +32,8 @@ set(SOURCE_FILES
 
 set(SOURCE_FILES_MINGW
         icon.rc
-        win32.c
-        win32.h)
+        mingw.c
+        mingw.h)
 
 set(LIBRARIES
         ${GTK_LIBRARIES}

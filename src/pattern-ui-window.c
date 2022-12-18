@@ -72,7 +72,7 @@ pattern_ui_window_new()
     gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_detach, TRUE, TRUE, 0);
 
     ui->b_about = gtk_button_new();
-    gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("gtk-about", GTK_ICON_SIZE_BUTTON));
+    gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("help-about-symbolic", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->b_about, FALSE, FALSE, 0);
 
     ui->box_header1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);

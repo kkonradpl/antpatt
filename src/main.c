@@ -18,9 +18,8 @@
 #include "pattern.h"
 #include "pattern-ipc.h"
 #include "pattern-json.h"
-
 #ifdef G_OS_WIN32
-#include "win32.h"
+#include "mingw.h"
 #endif
 
 typedef struct antpatt_arg
@@ -77,13 +76,13 @@ main(gint   argc,
     pattern_t *p = NULL;
     gchar *error = NULL;
 
-#ifdef G_OS_WIN32
-    win32_init();
-#endif
-
     gtk_disable_setlocale();
     gtk_init(&argc, &argv);
     parse_args(argc, argv);
+
+#ifdef G_OS_WIN32
+    mingw_init();
+#endif
 
     if (args.project)
     {
@@ -106,7 +105,8 @@ main(gint   argc,
     gtk_main();
 
 #ifdef G_OS_WIN32
-    win32_cleanup();
+    mingw_cleanup();
 #endif
+
     return 0;
 }

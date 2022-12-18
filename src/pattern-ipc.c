@@ -18,7 +18,7 @@
 #include "pattern-ui.h"
 #include "pattern-color.h"
 #ifdef G_OS_WIN32
-#include "win32.h"
+#include "mingw.h"
 #endif
 
 static const gchar command_start[] = "START";

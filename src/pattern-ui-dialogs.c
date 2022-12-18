@@ -17,6 +17,9 @@
 #include <string.h>
 #include "pattern-ui-dialogs.h"
 #include "version.h"
+#ifdef G_OS_WIN32
+#include "mingw.h"
+#endif
 
 static void pattern_ui_dialog_file_chooser_response(GtkWidget*, gint, gpointer);
 static gboolean str_has_suffix(const gchar*, const gchar*);
@@ -291,6 +294,9 @@ pattern_ui_dialog_about(GtkWindow *window)
     gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog), "Antenna pattern plotting and analysis software");
     gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog), "https://fmdx.pl/antpatt");
     gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog), APP_LICENCE);
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "activate-link", G_CALLBACK(mingw_uri_signal), NULL);
+#endif
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }

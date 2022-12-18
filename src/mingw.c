@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -14,25 +14,25 @@
  */
 
 #define _WIN32_WINNT 0x0500
+#include <gtk/gtk.h>
 #include <windows.h>
-#include <glib.h>
 
-#define WIN32_FONT_FILE "DejaVuSansMono.ttf"
+#define MINGW_FONT_FILE ".\\share\\fonts\\TTF\\DejaVuSansMono.ttf"
 
-static gint win32_font = 0;
+static gint mingw_font = 0;
 
 
 void
-win32_init(void)
+mingw_init(void)
 {
-    win32_font = AddFontResourceEx(WIN32_FONT_FILE, FR_PRIVATE, NULL);
+    mingw_font = AddFontResourceEx(MINGW_FONT_FILE, FR_PRIVATE, NULL);
 }
 
 void
-win32_cleanup(void)
+mingw_cleanup(void)
 {
-    if(win32_font)
-        RemoveFontResourceEx(WIN32_FONT_FILE, FR_PRIVATE, NULL);
+    if(mingw_font)
+        RemoveFontResourceEx(MINGW_FONT_FILE, FR_PRIVATE, NULL);
 }
 
 gchar*
@@ -52,4 +52,13 @@ strsep(gchar       **string,
         *string = p + 1;
     }
     return start;
+}
+
+gboolean
+mingw_uri_signal(GtkWidget *label,
+                 gchar     *uri,
+                 gpointer   data)
+{
+    ShellExecute(0, "open", uri, NULL, NULL, 1);
+    return TRUE;
 }

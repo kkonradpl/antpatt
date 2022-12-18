@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -13,12 +13,14 @@
  *  GNU General Public License for more details.
  */
 
-#ifndef ANTPATT_WIN32_H_
-#define ANTPATT_WIN32_H_
+#ifndef ANTPATT_MINGW_H_
+#define ANTPATT_MINGW_H_
 
-void win32_init(void);
-void win32_cleanup(void);
+void mingw_init(void);
+void mingw_cleanup(void);
 
 gchar* strsep(gchar**, const gchar*);
+
+gboolean mingw_uri_signal(GtkWidget*, gchar*, gpointer);
 
 #endif

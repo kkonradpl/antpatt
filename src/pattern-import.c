@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 #include <math.h>
 #include "pattern-import.h"
 #ifdef G_OS_WIN32
-#include "win32.h"
+#include "mingw.h"
 #endif
 
 typedef struct pattern_import

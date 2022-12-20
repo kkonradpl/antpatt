@@ -73,10 +73,12 @@ pattern_ui_window_new()
     gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_render, TRUE, TRUE, 0);
 
     ui->b_detach = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_detach), "Detach");
     gtk_button_set_image(GTK_BUTTON(ui->b_detach), gtk_image_new_from_icon_name("view-restore", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->b_detach, FALSE, FALSE, 0);
 
     ui->b_about = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_about), "About...");
     gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("help-about-symbolic", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->b_about, FALSE, FALSE, 0);
 
@@ -157,10 +159,12 @@ pattern_ui_window_new()
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_add, FALSE, FALSE, 0);
 
     ui->b_down = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_down), "Move down");
     gtk_button_set_image(GTK_BUTTON(ui->b_down), gtk_image_new_from_icon_name("go-down", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_down, FALSE, FALSE, 0);
 
     ui->b_up = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_up), "Move up");
     gtk_button_set_image(GTK_BUTTON(ui->b_up), gtk_image_new_from_icon_name("go-up", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_up, FALSE, FALSE, 0);
 
@@ -175,14 +179,17 @@ pattern_ui_window_new()
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->c_select, TRUE, TRUE, 0);
 
     ui->b_export = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_export), "Export");
     gtk_button_set_image(GTK_BUTTON(ui->b_export), gtk_image_new_from_icon_name("document-save", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_export, FALSE, FALSE, 0);
 
     ui->b_remove = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_remove), "Remove");
     gtk_button_set_image(GTK_BUTTON(ui->b_remove), gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_remove, FALSE, FALSE, 0);
 
     ui->b_clear = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_clear), "Remove all");
     gtk_button_set_image(GTK_BUTTON(ui->b_clear), gtk_image_new_from_icon_name("edit-clear", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_select), ui->b_clear, FALSE, FALSE, 0);
 
@@ -213,6 +220,7 @@ pattern_ui_window_new()
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->b_color, FALSE, FALSE, 0);
 
     ui->b_color_next = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_color_next), "Pick another color");
     gtk_button_set_image(GTK_BUTTON(ui->b_color_next), gtk_image_new_from_icon_name("gtk-select-color", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit1), ui->b_color_next, FALSE, FALSE, 0);
 
@@ -220,26 +228,32 @@ pattern_ui_window_new()
     gtk_container_add(GTK_CONTAINER(ui->box), ui->box_edit2);
 
     ui->b_rotate_reset = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_rotate_reset), "Reset rotation");
     gtk_button_set_image(GTK_BUTTON(ui->b_rotate_reset), gtk_image_new_from_icon_name("go-home", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_rotate_reset, TRUE, TRUE, 0);
 
     ui->b_rotate_ccw_fast = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_rotate_ccw_fast), "Rotate CCW fast");
     gtk_button_set_image(GTK_BUTTON(ui->b_rotate_ccw_fast), gtk_image_new_from_icon_name("media-seek-backward", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_rotate_ccw_fast, TRUE, TRUE, 0);
 
     ui->b_rotate_ccw = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_rotate_ccw), "Rotate CCW");
     gtk_button_set_image(GTK_BUTTON(ui->b_rotate_ccw), gtk_image_new_from_icon_name("go-previous", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_rotate_ccw, TRUE, TRUE, 0);
 
     ui->b_rotate_peak = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_rotate_peak), "Find peak");
     gtk_button_set_image(GTK_BUTTON(ui->b_rotate_peak), gtk_image_new_from_icon_name("go-top", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_rotate_peak, TRUE, TRUE, 0);
 
     ui->b_rotate_cw = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_rotate_cw), "Rotate CW");
     gtk_button_set_image(GTK_BUTTON(ui->b_rotate_cw), gtk_image_new_from_icon_name("go-next", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_rotate_cw, TRUE, TRUE, 0);
 
     ui->b_rotate_cw_fast = gtk_button_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_rotate_cw_fast), "Rotate CW fast");
     gtk_button_set_image(GTK_BUTTON(ui->b_rotate_cw_fast), gtk_image_new_from_icon_name("media-seek-forward", GTK_ICON_SIZE_MENU));
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_rotate_cw_fast, TRUE, TRUE, 0);
 

@@ -33,6 +33,7 @@ pattern_ui_window_new()
     gtk_window_set_title(GTK_WINDOW(ui->window), APP_TITLE);
     gtk_window_set_icon_name(GTK_WINDOW(ui->window), APP_ICON);
     gtk_window_set_resizable(GTK_WINDOW(ui->window), FALSE);
+    gtk_window_set_position(GTK_WINDOW(ui->window), GTK_WIN_POS_CENTER);
     gtk_container_set_border_width(GTK_CONTAINER(ui->window), 5);
 
     ui->window_plot = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -60,16 +61,20 @@ pattern_ui_window_new()
     gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_load, TRUE, TRUE, 0);
 
     ui->b_save = gtk_button_new_with_label("Save");
-    gtk_button_set_image(GTK_BUTTON(ui->b_save), gtk_image_new_from_icon_name("document-save-as", GTK_ICON_SIZE_BUTTON));
+    gtk_button_set_image(GTK_BUTTON(ui->b_save), gtk_image_new_from_icon_name("document-save", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_save, TRUE, TRUE, 0);
+
+    ui->b_save_as = gtk_button_new_with_label("Save as");
+    gtk_button_set_image(GTK_BUTTON(ui->b_save_as), gtk_image_new_from_icon_name("document-save-as", GTK_ICON_SIZE_BUTTON));
+    gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_save_as, TRUE, TRUE, 0);
 
     ui->b_render = gtk_button_new_with_label("Render");
     gtk_button_set_image(GTK_BUTTON(ui->b_render), gtk_image_new_from_icon_name("document-save-as", GTK_ICON_SIZE_BUTTON));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_render, TRUE, TRUE, 0);
 
-    ui->b_detach = gtk_button_new_with_label("Detach");
+    ui->b_detach = gtk_button_new();
     gtk_button_set_image(GTK_BUTTON(ui->b_detach), gtk_image_new_from_icon_name("view-restore", GTK_ICON_SIZE_BUTTON));
-    gtk_box_pack_start(GTK_BOX(ui->box_buttons_main), ui->b_detach, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->b_detach, FALSE, FALSE, 0);
 
     ui->b_about = gtk_button_new();
     gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("help-about-symbolic", GTK_ICON_SIZE_BUTTON));
@@ -247,7 +252,7 @@ pattern_ui_window_new()
     ui->b_hide = gtk_check_button_new_with_label("Hide");
     gtk_box_pack_start(GTK_BOX(ui->box_edit2), ui->b_hide, FALSE, FALSE, 0);
 
-    g_signal_connect_swapped(ui->window, "delete-event", G_CALLBACK(pattern_ui_window_delete), ui);
+    g_signal_connect_data(ui->window, "delete-event", G_CALLBACK(pattern_ui_window_delete), ui, NULL, G_CONNECT_AFTER | G_CONNECT_SWAPPED);
     g_signal_connect_swapped(ui->window_plot, "delete-event", G_CALLBACK(pattern_ui_window_attach), ui);
     g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_detach), ui);
     return ui;
@@ -265,7 +270,7 @@ pattern_ui_window_delete(pattern_ui_window_t *ui)
 static gboolean
 pattern_ui_window_attach(pattern_ui_window_t *ui)
 {
-    gtk_button_set_label(GTK_BUTTON(ui->b_detach), "Detach");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_detach), "Detach");
     g_signal_handlers_disconnect_by_func(ui->b_detach, G_CALLBACK(pattern_ui_window_attach), (gpointer)ui);
     g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_detach), (gpointer)ui);
 
@@ -280,7 +285,7 @@ pattern_ui_window_attach(pattern_ui_window_t *ui)
 static void
 pattern_ui_window_detach(pattern_ui_window_t *ui)
 {
-    gtk_button_set_label(GTK_BUTTON(ui->b_detach), "Attach");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_detach), "Attach");
     g_signal_handlers_disconnect_by_func(ui->b_detach, G_CALLBACK(pattern_ui_window_detach), (gpointer)ui);
     g_signal_connect_swapped(ui->b_detach, "clicked", G_CALLBACK(pattern_ui_window_attach), (gpointer)ui);
 
@@ -292,4 +297,41 @@ pattern_ui_window_detach(pattern_ui_window_t *ui)
     gtk_window_set_transient_for(GTK_WINDOW(ui->window_plot), GTK_WINDOW(ui->window));
     gtk_widget_show_all(ui->window_plot);
     gtk_window_set_transient_for(GTK_WINDOW(ui->window_plot), NULL);
+}
+
+void
+pattern_ui_window_set_title(pattern_ui_window_t *ui,
+                            const gchar         *filename)
+{
+    gchar *title;
+    gchar *plot_title;
+    gchar *name;
+    gchar *ext;
+
+    if (filename)
+    {
+        name = g_path_get_basename(filename);
+        ext = strrchr(name, '.');
+        if (ext && !g_ascii_strcasecmp(ext, APP_FILE_COMPRESS))
+        {
+            *ext = '\0';
+            ext = strrchr(name, '.');
+        }
+        if (ext && !g_ascii_strcasecmp(ext, APP_FILE_EXT))
+            *ext = '\0';
+
+        title = g_strdup_printf("%s [%s]", APP_TITLE, name);
+        plot_title = g_strdup_printf("%s [%s]", APP_TITLE_PLOT, name);
+        g_free(name);
+    }
+    else
+    {
+        title = g_strdup_printf("%s", APP_TITLE);
+        plot_title = g_strdup_printf("%s", APP_TITLE_PLOT);
+    }
+
+    gtk_window_set_title(GTK_WINDOW(ui->window), title);
+    gtk_window_set_title(GTK_WINDOW(ui->window_plot), plot_title);
+    g_free(title);
+    g_free(plot_title);
 }

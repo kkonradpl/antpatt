@@ -17,6 +17,6 @@
 #define ANTPATT_PATTERN_COLOR_H_
 
 GdkRGBA pattern_color_next(void);
-char* pattern_color_to_string(GdkRGBA*);
+char* pattern_color_to_string(const GdkRGBA*);
 
 #endif

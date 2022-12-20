@@ -25,6 +25,7 @@ typedef struct pattern_data
     GdkRGBA color;
     gboolean hide;
     gboolean fill;
+    gboolean changed;
 } pattern_data_t;
 
 
@@ -46,6 +47,19 @@ pattern_data_free(pattern_data_t *data)
     g_free(data);
 }
 
+gboolean
+pattern_data_changed(const pattern_data_t *data)
+{
+    return data->changed || pattern_signal_changed(data->s);
+}
+
+void
+pattern_data_unchanged(pattern_data_t *data)
+{
+    pattern_signal_unchanged(data->s);
+    data->changed = FALSE;
+}
+
 pattern_signal_t*
 pattern_data_get_signal(pattern_data_t *data)
 {
@@ -54,7 +68,7 @@ pattern_data_get_signal(pattern_data_t *data)
 }
 
 const gchar*
-pattern_data_get_name(pattern_data_t *data)
+pattern_data_get_name(const pattern_data_t *data)
 {
     static const gchar *default_name = "";
     g_assert(data != NULL);
@@ -66,12 +80,16 @@ pattern_data_set_name(pattern_data_t *data,
                       const gchar    *value)
 {
     g_assert(data != NULL);
-    g_free(data->name);
-    data->name = (value ? g_strdup(value) : NULL);
+    if (g_strcmp0(value, data->name) != 0)
+    {
+        g_free(data->name);
+        data->name = (value ? g_strdup(value) : NULL);
+        data->changed = TRUE;
+    }
 }
 
 gint
-pattern_data_get_freq(pattern_data_t *data)
+pattern_data_get_freq(const pattern_data_t *data)
 {
     g_assert(data != NULL);
     return data->freq;
@@ -84,11 +102,15 @@ pattern_data_set_freq(pattern_data_t *data,
     g_assert(data != NULL);
     value = MIN(PATTERN_DATA_MAX_FREQ, value);
     value = MAX(PATTERN_DATA_MIN_FREQ, value);
-    data->freq = value;
+    if (value != data->freq)
+    {
+        data->freq = value;
+        data->changed = TRUE;
+    }
 }
 
-GdkRGBA*
-pattern_data_get_color(pattern_data_t *data)
+const GdkRGBA*
+pattern_data_get_color(const pattern_data_t *data)
 {
     g_assert(data != NULL);
     return &data->color;
@@ -99,11 +121,16 @@ pattern_data_set_color(pattern_data_t *data,
                        const GdkRGBA  *value)
 {
     g_assert(data != NULL);
-    data->color = *value;
+    if (!gdk_rgba_equal(value, &data->color))
+    {
+        data->color = *value;
+        data->changed = TRUE;
+    }
+
 }
 
 gboolean
-pattern_data_get_hide(pattern_data_t *data)
+pattern_data_get_hide(const pattern_data_t *data)
 {
     g_assert(data != NULL);
     return data->hide;
@@ -114,11 +141,15 @@ pattern_data_set_hide(pattern_data_t *data,
                       gboolean        value)
 {
     g_assert(data != NULL);
-    data->hide = value;
+    if (value != data->hide)
+    {
+        data->hide = value;
+        data->changed = TRUE;
+    }
 }
 
 gboolean
-pattern_data_get_fill(pattern_data_t *data)
+pattern_data_get_fill(const pattern_data_t *data)
 {
     g_assert(data != NULL);
     return data->fill;
@@ -129,5 +160,9 @@ pattern_data_set_fill(pattern_data_t *data,
                       gboolean        value)
 {
     g_assert(data != NULL);
-    data->fill = value;
+    if (value != data->fill)
+    {
+        data->fill = value;
+        data->changed = TRUE;
+    }
 }

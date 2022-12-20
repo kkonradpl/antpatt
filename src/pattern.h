@@ -34,8 +34,11 @@ enum
 typedef struct pattern pattern_t;
 
 pattern_t* pattern_new(void);
-void pattern_free(pattern_t*);
-pattern_t* pattern_get_main_instance(void);
+void       pattern_free(pattern_t*);
+
+gboolean pattern_changed(const pattern_t*);
+void     pattern_unchanged(pattern_t*);
+void     pattern_reset(pattern_t*);
 
 GtkListStore*        pattern_get_model(pattern_t*);
 void                 pattern_set_ui(pattern_t*, pattern_ui_window_t*);
@@ -47,36 +50,36 @@ void pattern_clear(pattern_t*);
 
 void            pattern_set_current(pattern_t*, pattern_data_t*);
 pattern_data_t* pattern_get_current(pattern_t*);
-void            pattern_set_size(pattern_t*, gint);
-gint            pattern_get_size(pattern_t*);
-void            pattern_set_title(pattern_t*, const gchar*);
-const gchar*    pattern_get_title(pattern_t*);
-void            pattern_set_scale(pattern_t*, gint);
-gint            pattern_get_scale(pattern_t*);
-void            pattern_set_line(pattern_t*, gdouble);
-gdouble         pattern_get_line(pattern_t*);
-void            pattern_set_interp(pattern_t*, gint);
-gint            pattern_get_interp(pattern_t*);
-void            pattern_set_full_angle(pattern_t*, gboolean);
-gboolean        pattern_get_full_angle(pattern_t*);
-void            pattern_set_black(pattern_t*, gboolean);
-gboolean        pattern_get_black(pattern_t*);
-void            pattern_set_normalize(pattern_t*, gboolean);
-gboolean        pattern_get_normalize(pattern_t*);
-void            pattern_set_legend(pattern_t*, gboolean);
-gboolean        pattern_get_legend(pattern_t*);
 
-void pattern_set_focus_idx(pattern_t*, gint);
-gint pattern_get_focus_idx(pattern_t*);
-void pattern_set_rotating_idx(pattern_t*, gint);
-gint pattern_get_rotating_idx(pattern_t*);
+void         pattern_set_size(pattern_t*, gint);
+gint         pattern_get_size(const pattern_t*);
+void         pattern_set_title(pattern_t*, const gchar*);
+const gchar* pattern_get_title(const pattern_t*);
+void         pattern_set_scale(pattern_t*, gint);
+gint         pattern_get_scale(const pattern_t*);
+void         pattern_set_line(pattern_t*, gdouble);
+gdouble      pattern_get_line(const pattern_t*);
+void         pattern_set_interp(pattern_t*, gint);
+gint         pattern_get_interp(const pattern_t*);
+void         pattern_set_full_angle(pattern_t*, gboolean);
+gboolean     pattern_get_full_angle(const pattern_t*);
+void         pattern_set_black(pattern_t*, gboolean);
+gboolean     pattern_get_black(const pattern_t*);
+void         pattern_set_normalize(pattern_t*, gboolean);
+gboolean     pattern_get_normalize(const pattern_t*);
+void         pattern_set_legend(pattern_t*, gboolean);
+gboolean     pattern_get_legend(const pattern_t*);
 
-gint pattern_get_visible(pattern_t*);
-gdouble pattern_get_peak(pattern_t*);
+void         pattern_set_filename(pattern_t*, const gchar*);
+const gchar* pattern_get_filename(const pattern_t*);
+void         pattern_set_focus_idx(pattern_t*, gint);
+gint         pattern_get_focus_idx(const pattern_t*);
+void         pattern_set_rotating_idx(pattern_t*, gint);
+gint         pattern_get_rotating_idx(const pattern_t*);
+
+gint    pattern_get_visible_count(const pattern_t*);
+gdouble pattern_get_peak(const pattern_t*);
 
 void pattern_hide(pattern_t*, pattern_data_t*, gboolean);
-
-void pattern_live_start(pattern_t*);
-void pattern_live_stop(pattern_t*);
 
 #endif

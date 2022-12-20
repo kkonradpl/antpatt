@@ -16,7 +16,7 @@
 #ifndef ANTPATT_PATTERN_IPC_H_
 #define ANTPATT_PATTERN_IPC_H_
 
-void pattern_ipc_init(void);
+void pattern_ipc_init(pattern_t*);
 void pattern_ipc_cleanup(void);
 
 #endif

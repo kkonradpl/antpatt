@@ -73,6 +73,29 @@ pattern_ui_dialog_yesno(GtkWindow   *parent,
     return response == GTK_RESPONSE_YES;
 }
 
+gint
+pattern_ui_dialog_ask_unsaved(GtkWindow *parent)
+{
+    GtkWidget *dialog;
+    gint response;
+
+    dialog = gtk_message_dialog_new(parent,
+                                    GTK_DIALOG_MODAL,
+                                    GTK_MESSAGE_QUESTION,
+                                    GTK_BUTTONS_NONE,
+                                    "There are some unsaved changes.\nDo you want to save them?");
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+                           "_Cancel", GTK_RESPONSE_CANCEL,
+                           "_Save", GTK_RESPONSE_YES,
+                           "_Discard", GTK_RESPONSE_NO,
+                           NULL);
+
+    gtk_window_set_title(GTK_WINDOW(dialog), "Project");
+    response = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return response;
+}
+
 gchar*
 pattern_ui_dialog_open(GtkWindow *window)
 {

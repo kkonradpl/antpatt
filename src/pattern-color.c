@@ -36,8 +36,9 @@ pattern_color_next()
 }
 
 char*
-pattern_color_to_string(GdkRGBA *color)
+pattern_color_to_string(const GdkRGBA *color)
 {
+    g_assert(color != NULL);
     return g_strdup_printf("#%02X%02X%02X",
                            (uint8_t)round(color->red*255),
                            (uint8_t)round(color->green*255),

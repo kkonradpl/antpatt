@@ -46,14 +46,15 @@
 #define KEY_ROTATE     "rotate"
 #define KEY_SAMPLES    "samples"
 
-static pattern_t* pattern_json_parse(json_object*, gchar**);
+static gboolean pattern_json_parse(pattern_t*, json_object*, gchar**);
 static pattern_data_t* pattern_json_parse_data(json_object*);
 static json_object* pattern_json_build(pattern_t*, gboolean);
 static gboolean pattern_json_build_foreach(GtkTreeModel*, GtkTreePath*, GtkTreeIter*, gpointer);
 static const gchar* pattern_json_format_double(gdouble);
 
-pattern_t*
-pattern_json_load(const gchar  *filename,
+gboolean
+pattern_json_load(pattern_t    *p,
+                  const gchar  *filename,
                   gchar       **error)
 {
     gzFile gzfp;
@@ -63,13 +64,13 @@ pattern_json_load(const gchar  *filename,
     enum json_tokener_error jerr;
     gint n, gerr;
     const gchar *err_string;
-    pattern_t *p;
+    gboolean ret;
 
 	gzfp = gzopen(filename, "r");
 	if(!gzfp)
 	{
         *error = g_strdup_printf("Failed to open a file:\n%s", filename);
-        return NULL;
+        return FALSE;
 	}
 
     json = json_tokener_new();
@@ -91,7 +92,7 @@ pattern_json_load(const gchar  *filename,
                 *error = g_strdup_printf("Failed to read a file:\n%s\n%s", filename, err_string);
                 gzclose(gzfp);
                 json_tokener_free(json);
-                return NULL;
+                return FALSE;
             }
         }
     } while ((jerr = json_tokener_get_error(json)) == json_tokener_continue);
@@ -102,41 +103,42 @@ pattern_json_load(const gchar  *filename,
         if(root)
             json_object_put(root);
         json_tokener_free(json);
-        return NULL;
+        return FALSE;
     }
     gzclose(gzfp);
 
-    p = pattern_json_parse(root, error);
+    ret = pattern_json_parse(p, root, error);
     json_object_put(root);
     json_tokener_free(json);
-    return p;
+
+    pattern_set_filename(p, filename);
+    pattern_unchanged(p);
+    return ret;
 }
 
-static pattern_t*
-pattern_json_parse(json_object  *root,
+static gboolean
+pattern_json_parse(pattern_t    *p,
+                   json_object  *root,
                    gchar       **error)
 {
     json_object *object;
     json_object *array;
     gint version;
-    pattern_t *p;
     pattern_data_t *data;
     size_t len, i;
 
     if(!json_object_object_get_ex(root, KEY_VERSION, &object))
     {
         *error = g_strdup("Invalid file format");
-        return NULL;
+        return FALSE;
     }
 
     version = json_object_get_int(object);
     if(version != PATTERN_JSON_VERSION)
     {
         *error = g_strdup("Invalid file format version");
-        return NULL;
+        return FALSE;
     }
-
-    p = pattern_new();
 
     /* KEY_SIZE (int) */
     if(json_object_object_get_ex(root, KEY_SIZE, &object) &&
@@ -217,7 +219,7 @@ pattern_json_parse(json_object  *root,
         }
     }
 
-    return p;
+    return TRUE;
 }
 
 static pattern_data_t*

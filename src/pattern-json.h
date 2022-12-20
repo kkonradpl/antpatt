@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017  Konrad Kosmatka
+ *  Copyright (c) 2017-2022  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
 #ifndef ANTPATT_PATTERN_JSON_H_
 #define ANTPATT_PATTERN_JSON_H_
 
-pattern_t* pattern_json_load(const gchar*, gchar**);
-gboolean   pattern_json_save(pattern_t*, const gchar*, gboolean);
+gboolean pattern_json_load(pattern_t*, const gchar*, gchar**);
+gboolean pattern_json_save(pattern_t*, const gchar*, gboolean);
 
 #endif

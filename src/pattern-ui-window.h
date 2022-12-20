@@ -37,6 +37,7 @@ typedef struct pattern_ui_window
     GtkWidget *b_new;
     GtkWidget *b_load;
     GtkWidget *b_save;
+    GtkWidget *b_save_as;
     GtkWidget *b_render;
     GtkWidget *b_detach;
     GtkWidget *b_about;
@@ -85,8 +86,11 @@ typedef struct pattern_ui_window
     GtkWidget *b_fill;
     GtkWidget *b_rev;
     GtkWidget *b_hide;
+
+    gint lock;
 } pattern_ui_window_t;
 
 pattern_ui_window_t* pattern_ui_window_new(void);
+void pattern_ui_window_set_title(pattern_ui_window_t*, const gchar*);
 
 #endif

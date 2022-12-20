@@ -68,9 +68,9 @@ static gdouble pattern_plot_signal(gint, gdouble);
 
 
 gboolean
-pattern_plot(GtkWidget      *widget,
-             cairo_t        *cr,
-             pattern_t      *p)
+pattern_plot(GtkWidget *widget,
+             cairo_t   *cr,
+             pattern_t *p)
 {
     pattern_plot_cairo(cr, p);
     return FALSE;
@@ -279,7 +279,7 @@ pattern_plot_radiation(cairo_t        *cr,
                 continue;
 
             if(plot->legend)
-                pattern_plot_legend(cr, plot, data, pattern_get_visible(p), i);
+                pattern_plot_legend(cr, plot, data, pattern_get_visible_count(p), i);
 
             if(i == 0)
             {
@@ -320,7 +320,7 @@ pattern_plot_radiation_data(cairo_t        *cr,
     gdouble sample;
     gboolean finished;
     pattern_signal_t *s = pattern_data_get_signal(data);
-    GdkRGBA *color = pattern_data_get_color(data);
+    const GdkRGBA *color = pattern_data_get_color(data);
     gint interp = pattern_signal_interp(s);
     gint count = pattern_signal_count(s);
 
@@ -382,7 +382,7 @@ pattern_plot_legend(cairo_t        *cr,
                     gint            index)
 {
     gint offset = (gint)(plot->width/(PATTERN_BASE_SIZE/(PATTERN_OFFSET/4.0)));
-    GdkRGBA *color = pattern_data_get_color(data);
+    const GdkRGBA *color = pattern_data_get_color(data);
 
     gint line_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_PLOT_LEGEND_WIDTH));
     gint font_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
@@ -496,7 +496,7 @@ pattern_plot_info(cairo_t        *cr,
     gint idx =  pattern_get_focus_idx(p);
     gdouble angle = idx/(gdouble)count*360.0;
     gdouble peak = (plot->norm ? pattern_signal_get_peak(pattern_data_get_signal(data)) : plot->peak);
-    GdkRGBA *color = pattern_data_get_color(data);
+    const GdkRGBA *color = pattern_data_get_color(data);
     gint offset = (gint)(plot->width/(PATTERN_BASE_SIZE/(PATTERN_OFFSET/4.0)));
     gint font_height = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_FONT_SIZE_LEGEND));
     gint spacing = (gint)(plot->width/(PATTERN_BASE_SIZE/PATTERN_LEGEND_SPACING));

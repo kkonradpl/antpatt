@@ -25,16 +25,19 @@ typedef struct pattern_data pattern_data_t;
 pattern_data_t* pattern_data_new(pattern_signal_t*);
 void            pattern_data_free(pattern_data_t*);
 
+gboolean pattern_data_changed(const pattern_data_t*);
+void     pattern_data_unchanged(pattern_data_t*);
+
 pattern_signal_t* pattern_data_get_signal(pattern_data_t*);
-const gchar*      pattern_data_get_name(pattern_data_t*);
+const gchar*      pattern_data_get_name(const pattern_data_t*);
 void              pattern_data_set_name(pattern_data_t*, const gchar*);
-gint              pattern_data_get_freq(pattern_data_t*);
+gint              pattern_data_get_freq(const pattern_data_t*);
 void              pattern_data_set_freq(pattern_data_t*, gint);
-GdkRGBA*          pattern_data_get_color(pattern_data_t*);
+const GdkRGBA*    pattern_data_get_color(const pattern_data_t*);
 void              pattern_data_set_color(pattern_data_t*, const GdkRGBA*);
-gboolean          pattern_data_get_hide(pattern_data_t*);
+gboolean          pattern_data_get_hide(const pattern_data_t*);
 void              pattern_data_set_hide(pattern_data_t*, gboolean);
-gboolean          pattern_data_get_fill(pattern_data_t*);
+gboolean          pattern_data_get_fill(const pattern_data_t*);
 void              pattern_data_set_fill(pattern_data_t*, gboolean);
 
 #endif

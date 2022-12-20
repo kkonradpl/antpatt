@@ -30,10 +30,11 @@ typedef struct pattern_signal
     gint interp;
     gsl_interp_accel *acc;
     gsl_spline *spline;
+    gboolean changed;
 } pattern_signal_t;
 
-static gdouble pattern_signal_sample(pattern_signal_t*, gint, gint);
-static gint pattern_signal_idx(pattern_signal_t*, gint);
+static gdouble pattern_signal_sample(const pattern_signal_t*, gint, gint);
+static gint pattern_signal_idx(const pattern_signal_t*, gint);
 static void pattern_signal_interp_init(pattern_signal_t*);
 static void pattern_signal_interp_invalidate(pattern_signal_t*);
 
@@ -51,6 +52,7 @@ pattern_signal_new()
     s->interp = PATTERN_INTERP_LINEAR;
     s->acc = NULL;
     s->spline = NULL;
+    s->changed = FALSE;
     return s;
 }
 
@@ -68,16 +70,31 @@ pattern_signal_free(pattern_signal_t *s)
     }
 }
 
+gboolean
+pattern_signal_changed(const pattern_signal_t *s)
+{
+    g_assert(s != NULL);
+    return s->changed;
+}
+
+void
+pattern_signal_unchanged(pattern_signal_t *s)
+{
+    g_assert(s != NULL);
+    s->changed = FALSE;
+}
+
 gint
-pattern_signal_count(pattern_signal_t *s)
+pattern_signal_count(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->count;
 }
 
 gint
-pattern_signal_interp(pattern_signal_t *s)
+pattern_signal_interp(const pattern_signal_t *s)
 {
+    g_assert(s != NULL);
     gint count = pattern_signal_count(s);
 
     if(count >= 1024)
@@ -112,16 +129,17 @@ pattern_signal_push(pattern_signal_t *s,
 
     g_array_append_val(s->arr, val);
     s->count++;
+    s->changed = TRUE;
 
-    if(isnan(s->peak) || s->peak < val)
+    if (isnan(s->peak) || s->peak < val)
         s->peak = val;
 
     pattern_signal_interp_invalidate(s);
 }
 
 gdouble
-pattern_signal_get_sample(pattern_signal_t *s,
-                              gint          idx)
+pattern_signal_get_sample(const pattern_signal_t *s,
+                          gint                    idx)
 {
     g_assert(s != NULL);
     g_assert(s->count != 0);
@@ -130,9 +148,9 @@ pattern_signal_get_sample(pattern_signal_t *s,
 }
 
 static gdouble
-pattern_signal_sample(pattern_signal_t *s,
-                      gint              idx,
-                      gint              avg)
+pattern_signal_sample(const pattern_signal_t *s,
+                      gint                    idx,
+                      gint                    avg)
 {
     gdouble val;
     gint i;
@@ -155,8 +173,8 @@ pattern_signal_sample(pattern_signal_t *s,
 }
 
 static gint
-pattern_signal_idx(pattern_signal_t *s,
-                   gint              idx)
+pattern_signal_idx(const pattern_signal_t *s,
+                   gint                    idx)
 {
     if(idx < 0)
         return s->count - 1 + ((idx + 1) % s->count);
@@ -166,9 +184,10 @@ pattern_signal_idx(pattern_signal_t *s,
 
 
 gdouble
-pattern_signal_get_sample_raw(pattern_signal_t *s,
-                              gint              idx)
+pattern_signal_get_sample_raw(const pattern_signal_t *s,
+                              gint                    idx)
 {
+    g_assert(s != NULL);
     idx = pattern_signal_idx(s, idx);
     return g_array_index(s->arr, gdouble, idx);
 }
@@ -216,7 +235,7 @@ pattern_signal_get_sample_interp(pattern_signal_t *s,
 }
 
 gdouble
-pattern_signal_get_peak(pattern_signal_t *s)
+pattern_signal_get_peak(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->peak;
@@ -239,7 +258,7 @@ pattern_signal_set_peak(pattern_signal_t *s,
 }
 
 gboolean
-pattern_signal_get_rev(pattern_signal_t *s)
+pattern_signal_get_rev(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->rev;
@@ -250,11 +269,15 @@ pattern_signal_set_rev(pattern_signal_t *s,
                        gboolean          rev)
 {
     g_assert(s != NULL);
-    s->rev = rev;
+    if (rev != s->rev)
+    {
+        s->rev = rev;
+        s->changed = TRUE;
+    }
 }
 
 gint
-pattern_signal_get_avg(pattern_signal_t *s)
+pattern_signal_get_avg(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->avg;
@@ -267,15 +290,16 @@ pattern_signal_set_avg(pattern_signal_t *s,
     g_assert(s != NULL);
     avg = MIN(PATTERN_SIGNAL_MAX_AVG, avg);
     avg = MAX(PATTERN_SIGNAL_MIN_AVG, avg);
-    if(s->avg != avg)
+    if (avg != s->avg)
     {
         s->avg = avg;
+        s->changed = TRUE;
         pattern_signal_interp_invalidate(s);
     }
 }
 
 gint
-pattern_signal_get_interp(pattern_signal_t *s)
+pattern_signal_get_interp(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->interp;
@@ -292,11 +316,15 @@ pattern_signal_set_interp(pattern_signal_t *s,
        (s->interp != PATTERN_INTERP_LINEAR && interp == PATTERN_INTERP_LINEAR))
         pattern_signal_interp_invalidate(s);
 
-    s->interp = interp;
+    if (interp != s->interp)
+    {
+        s->interp = interp;
+        s->changed = TRUE;
+    }
 }
 
 gboolean
-pattern_signal_get_finished(pattern_signal_t *s)
+pattern_signal_get_finished(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->finished;
@@ -306,11 +334,15 @@ void
 pattern_signal_set_finished(pattern_signal_t *s)
 {
     g_assert(s != NULL);
-    s->finished = TRUE;
+    if (!s->finished)
+    {
+        s->finished = TRUE;
+        s->changed = TRUE;
+    }
 }
 
 gint
-pattern_signal_get_rotate(pattern_signal_t *s)
+pattern_signal_get_rotate(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     return s->rotate;
@@ -321,7 +353,11 @@ pattern_signal_set_rotate(pattern_signal_t *s,
                           gint              n)
 {
     g_assert(s != NULL);
-    s->rotate = n;
+    if (n != s->rotate)
+    {
+        s->rotate = n;
+        s->changed = TRUE;
+    }
 }
 
 void
@@ -329,7 +365,11 @@ pattern_signal_rotate(pattern_signal_t *s,
                       gint              n)
 {
     g_assert(s != NULL);
-    s->rotate += (s->rev ? -n : n);
+    if (n)
+    {
+        s->rotate += (s->rev ? -n : n);
+        s->changed = TRUE;
+    }
 }
 
 void
@@ -372,14 +412,22 @@ pattern_signal_rotate_0(pattern_signal_t *s)
         }
     }
 
-    s->rotate = rotate;
+    if (rotate != s->rotate)
+    {
+        s->rotate = rotate;
+        s->changed = TRUE;
+    }
 }
 
 void
 pattern_signal_rotate_reset(pattern_signal_t *s)
 {
     g_assert(s != NULL);
-    s->rotate = 0;
+    if (s->rotate != 0)
+    {
+        s->rotate = 0;
+        s->changed = TRUE;
+    }
 }
 
 static void

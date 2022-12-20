@@ -42,9 +42,11 @@ static gboolean handle_stdin(GIOChannel*, GIOCondition, gpointer);
 static gboolean parse_command(pattern_t*, gchar*);
 static void send_response(const gchar*);
 
+static pattern_t *instance = NULL;
+
 
 void
-pattern_ipc_init()
+pattern_ipc_init(pattern_t *p)
 {
 #ifdef G_OS_WIN32
     channel_stdin = g_io_channel_win32_new_fd(fileno(stdin));
@@ -53,6 +55,7 @@ pattern_ipc_init()
 #endif
     if (channel_stdin)
     {
+        instance = p;
         g_io_channel_set_close_on_unref(channel_stdin, TRUE);
         g_io_add_watch(channel_stdin, G_IO_IN | G_IO_ERR | G_IO_HUP, (GIOFunc)handle_stdin, NULL);
     }
@@ -76,15 +79,11 @@ handle_stdin(GIOChannel   *source,
              GIOCondition  cond,
              gpointer      user_data)
 {
-    pattern_t *p = pattern_get_main_instance();
     g_autofree gchar *buff = NULL;
     GIOStatus status;
 
-    if (p == NULL)
-    {
-        pattern_ipc_cleanup();
-        return G_SOURCE_REMOVE;
-    }
+    if (instance == NULL)
+        return G_SOURCE_CONTINUE;
 
     status = g_io_channel_read_line(source, &buff, NULL, NULL, NULL);
     switch (status)
@@ -92,9 +91,9 @@ handle_stdin(GIOChannel   *source,
         case G_IO_STATUS_AGAIN:
             return G_SOURCE_CONTINUE;
         case G_IO_STATUS_NORMAL:
-            return parse_command(p, buff);
+            return parse_command(instance, buff);
         default:
-            return parse_command(p, NULL);
+            return parse_command(instance, NULL);
     }
 }
 

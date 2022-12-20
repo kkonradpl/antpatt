@@ -28,12 +28,14 @@
 static const GtkTargetEntry drop_types[] = {{ "text/uri-list", 0, UI_DRAG_URI_LIST_ID }};
 static const gint n_drop_types = sizeof(drop_types) / sizeof(drop_types[0]);
 
-static gint pattern_ui_instances = 0;
+static gboolean pattern_ui_changed(pattern_t*);
+static gboolean pattern_ui_delete(GtkWidget*, GdkEvent*, pattern_t*);
+static void pattern_ui_destroy(GtkWidget*, pattern_t*);
 
-static void pattern_ui_exit(GtkWidget*, pattern_t*);
 static void pattern_ui_new(GtkWidget*, pattern_t*);
 static void pattern_ui_load(GtkWidget*, pattern_t*);
 static void pattern_ui_save(GtkWidget*, pattern_t*);
+static void pattern_ui_save_as(GtkWidget*, pattern_t*);
 static void pattern_ui_render(GtkWidget*, pattern_t*);
 static void pattern_ui_about(GtkWidget*, pattern_t*);
 
@@ -69,6 +71,8 @@ static void pattern_ui_rotate_cw_fast(GtkWidget*, pattern_t*);
 static void pattern_ui_fill(GtkWidget*, pattern_t*);
 static void pattern_ui_rev(GtkWidget*, pattern_t*);
 static void pattern_ui_hide(GtkWidget*, pattern_t*);
+
+static void pattern_ui_sync_full(pattern_t *p);
 static void pattern_ui_sync(pattern_t*, gboolean, gboolean);
 
 static void pattern_ui_drag_data_received(GtkWidget*, GdkDragContext*, gint, gint, GtkSelectionData*, guint, guint, gpointer);
@@ -84,55 +88,23 @@ void
 pattern_ui_create(pattern_t *p)
 {
     pattern_ui_window_t *ui = pattern_get_ui(p);
-
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui->s_size), pattern_get_size(p));
-    gtk_entry_set_text(GTK_ENTRY(ui->e_title), pattern_get_title(p));
-    switch(pattern_get_scale(p))
-    {
-        default:
-        case 0:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_ARRL);
-            break;
-        case -20:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_20);
-            break;
-        case -30:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_30);
-            break;
-        case -40:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_40);
-            break;
-        case -50:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_50);
-            break;
-        case -60:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_60);
-            break;
-    }
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui->s_line), pattern_get_line(p));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_interp), pattern_get_interp(p));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_full_angle), pattern_get_full_angle(p));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_black), pattern_get_black(p));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_normalize), pattern_get_normalize(p));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_legend), pattern_get_legend(p));
-
-    /* Set model */
-    gtk_combo_box_set_model(GTK_COMBO_BOX(ui->c_select), GTK_TREE_MODEL(pattern_get_model(p)));
     gtk_cell_layout_set_cell_data_func(GTK_CELL_LAYOUT(ui->c_select), ui->r_select, pattern_ui_format_desc, NULL, NULL);
 
     /* Signals */
-    g_signal_connect(ui->window, "destroy", G_CALLBACK(pattern_ui_exit), p);
+    g_signal_connect(ui->window, "delete-event", G_CALLBACK(pattern_ui_delete), p);
+    g_signal_connect(ui->window, "destroy", G_CALLBACK(pattern_ui_destroy), p);
 
     g_signal_connect(ui->b_new, "clicked", G_CALLBACK(pattern_ui_new), p);
     g_signal_connect(ui->b_load, "clicked", G_CALLBACK(pattern_ui_load), p);
     g_signal_connect(ui->b_save, "clicked", G_CALLBACK(pattern_ui_save), p);
+    g_signal_connect(ui->b_save_as, "clicked", G_CALLBACK(pattern_ui_save_as), p);
     g_signal_connect(ui->b_render, "clicked", G_CALLBACK(pattern_ui_render), p);
     g_signal_connect(ui->b_about, "clicked", G_CALLBACK(pattern_ui_about), p);
 
-    g_signal_connect(ui->s_size, "changed", G_CALLBACK(pattern_ui_size), p);
+    g_signal_connect(ui->s_size, "value-changed", G_CALLBACK(pattern_ui_size), p);
     g_signal_connect(ui->e_title, "changed", G_CALLBACK(pattern_ui_title), p);
     g_signal_connect(ui->c_scale, "changed", G_CALLBACK(pattern_ui_scale), p);
-    g_signal_connect(ui->s_line, "changed", G_CALLBACK(pattern_ui_line), p);
+    g_signal_connect(ui->s_line, "value-changed", G_CALLBACK(pattern_ui_line), p);
 
     g_signal_connect(ui->c_interp, "changed", G_CALLBACK(pattern_ui_interp), p);
     g_signal_connect(ui->b_full_angle, "toggled", G_CALLBACK(pattern_ui_full_angle), p);
@@ -177,59 +149,81 @@ pattern_ui_create(pattern_t *p)
     g_signal_connect(ui->window_plot, "drag-data-received", G_CALLBACK(pattern_ui_drag_data_received), p);
     g_signal_connect(ui->window, "drag-data-received", G_CALLBACK(pattern_ui_drag_data_received), p);
 
-    pattern_ui_sync(p, TRUE, FALSE);
-    g_signal_emit_by_name(ui->s_size, "changed", p);
-
-    if(gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(p)), NULL))
-        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_select), 0);
-
+    pattern_ui_sync_full(p);
     gtk_widget_show_all(ui->window);
+}
 
-    pattern_ui_instances++;
+static gboolean
+pattern_ui_changed(pattern_t *p)
+{
+    if (!pattern_changed(p))
+        return FALSE;
+
+    switch (pattern_ui_dialog_ask_unsaved(GTK_WINDOW(pattern_get_ui(p)->window)))
+    {
+        case GTK_RESPONSE_YES:
+            gtk_button_clicked(GTK_BUTTON(pattern_get_ui(p)->b_save));
+            return pattern_changed(p);
+        case GTK_RESPONSE_NO:
+            return FALSE;
+        default:
+            return TRUE;
+    }
+}
+
+static gboolean
+pattern_ui_delete(GtkWidget *widget,
+                  GdkEvent  *event,
+                  pattern_t *p)
+{
+    return pattern_ui_changed(p) ? GDK_EVENT_STOP : GDK_EVENT_PROPAGATE;
 }
 
 static void
-pattern_ui_exit(GtkWidget *widget,
-                pattern_t *p)
+pattern_ui_destroy(GtkWidget *widget,
+                   pattern_t *p)
 {
     pattern_free(p);
-
-    if(!--pattern_ui_instances)
-        gtk_main_quit();
+    gtk_main_quit();
 }
 
 static void
 pattern_ui_new(GtkWidget *widget,
                pattern_t *p)
 {
-    pattern_t *pp = pattern_new();
-    pattern_set_ui(pp, pattern_ui_window_new());
+    if (pattern_ui_changed(p))
+        return;
+
+    gint size = pattern_get_size(p);
+    pattern_reset(p);
+    pattern_set_size(p, size);
+    pattern_unchanged(p);
+    pattern_ui_sync_full(p);
 }
 
 static void
 pattern_ui_load(GtkWidget *widget,
                 pattern_t *p)
 {
-    gchar *filename = pattern_ui_dialog_open(GTK_WINDOW(pattern_get_ui(p)->window));
-    gchar *error = NULL;
-    pattern_t *pp;
+    g_autofree gchar *filename = NULL;
+    g_autofree gchar *error = NULL;
 
-    if(filename)
+    if (pattern_ui_changed(p))
+        return;
+
+    filename = pattern_ui_dialog_open(GTK_WINDOW(pattern_get_ui(p)->window));
+    if (filename)
     {
-        pp = pattern_json_load(filename, &error);
-        if(pp)
-        {
-            pattern_set_ui(pp, pattern_ui_window_new());
-        }
-        else
+        pattern_reset(p);
+        if (!pattern_json_load(p, filename, &error))
         {
             pattern_ui_dialog(NULL,
                               GTK_MESSAGE_ERROR,
                               "Error",
                               error);
-            g_free(error);
         }
-        g_free(filename);
+
+        pattern_ui_sync_full(p);
     }
 }
 
@@ -237,16 +231,40 @@ static void
 pattern_ui_save(GtkWidget *widget,
                 pattern_t *p)
 {
-    gchar *filename = pattern_ui_dialog_save(GTK_WINDOW(pattern_get_ui(p)->window));
-    if(filename)
+    const gchar *filename = pattern_get_filename(p);
+
+    if (!filename)
     {
-        if(!pattern_json_save(p, filename, FALSE))
+        pattern_ui_save_as(widget, p);
+        return;
+    }
+
+    if (!pattern_json_save(p, filename, FALSE))
+    {
+        pattern_ui_dialog(GTK_WINDOW(pattern_get_ui(p)->window), GTK_MESSAGE_ERROR,
+                          APP_TITLE,
+                          "Unable to save the file.");
+    }
+    pattern_unchanged(p);
+}
+
+static void
+pattern_ui_save_as(GtkWidget *widget,
+                   pattern_t *p)
+{
+    g_autofree gchar *filename = pattern_ui_dialog_save(GTK_WINDOW(pattern_get_ui(p)->window));
+
+    if (filename)
+    {
+        if (!pattern_json_save(p, filename, FALSE))
         {
             pattern_ui_dialog(GTK_WINDOW(pattern_get_ui(p)->window), GTK_MESSAGE_ERROR,
                               APP_TITLE,
                               "Unable to save the file.");
         }
-        g_free(filename);
+        pattern_ui_window_set_title(pattern_get_ui(p), filename);
+        pattern_set_filename(p, filename);
+        pattern_unchanged(p);
     }
 }
 
@@ -254,16 +272,16 @@ static void
 pattern_ui_render(GtkWidget *widget,
                   pattern_t *p)
 {
-    gchar *filename = pattern_ui_dialog_render(GTK_WINDOW(pattern_get_ui(p)->window));
-    if(filename)
+    g_autofree gchar* filename = pattern_ui_dialog_render(GTK_WINDOW(pattern_get_ui(p)->window));
+
+    if (filename)
     {
-        if(!pattern_plot_to_file(p, filename))
+        if (!pattern_plot_to_file(p, filename))
         {
             pattern_ui_dialog(GTK_WINDOW(pattern_get_ui(p)->window), GTK_MESSAGE_ERROR,
                               APP_TITLE,
                               "Unable to save the image.");
         }
-        g_free(filename);
     }
 }
 
@@ -279,14 +297,21 @@ pattern_ui_size(GtkWidget *widget,
                 pattern_t *p)
 {
     gint size = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
-    pattern_set_size(p, size);
     gtk_widget_set_size_request(pattern_get_ui(p)->plot, size, size);
+
+    if (pattern_get_ui(p)->lock)
+        return;
+
+    pattern_set_size(p, size);
 }
 
 static void
 pattern_ui_title(GtkWidget *widget,
                  pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_set_title(p, gtk_entry_get_text(GTK_ENTRY(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -295,6 +320,9 @@ static void
 pattern_ui_scale(GtkWidget *widget,
                  pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     gint scale = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
     if(scale == PATTERN_UI_SCALE_ARRL)
@@ -317,6 +345,9 @@ static void
 pattern_ui_line(GtkWidget *widget,
                 pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_set_line(p, gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -325,6 +356,9 @@ static void
 pattern_ui_interp(GtkWidget *widget,
                   pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_set_interp(p, gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -333,6 +367,9 @@ static void
 pattern_ui_full_angle(GtkWidget *widget,
                       pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_set_full_angle(p, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -341,6 +378,9 @@ static void
 pattern_ui_black(GtkWidget *widget,
                  pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_set_black(p, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -349,6 +389,9 @@ static void
 pattern_ui_normalize(GtkWidget *widget,
                      pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_set_normalize(p, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -399,17 +442,22 @@ pattern_ui_up(GtkWidget *widget,
     GtkTreeIter prev;
     GtkTreePath *path;
 
-    if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
+    if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
+        return;
+
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(pattern_get_ui(p)->c_select)) == 0)
         return;
 
     path = gtk_tree_model_get_path(GTK_TREE_MODEL(pattern_get_model(p)), &iter);
     gtk_tree_path_prev(path);
-    if(gtk_tree_model_get_iter(GTK_TREE_MODEL(pattern_get_model(p)), &prev, path))
+
+    if (gtk_tree_model_get_iter(GTK_TREE_MODEL(pattern_get_model(p)), &prev, path))
     {
         gtk_list_store_move_before(pattern_get_model(p), &iter, &prev);
         gtk_widget_queue_draw(pattern_get_ui(p)->c_select);
         gtk_widget_queue_draw(pattern_get_ui(p)->plot);
     }
+
     gtk_tree_path_free(path);
 }
 
@@ -417,14 +465,15 @@ static void
 pattern_ui_select(GtkWidget *widget,
                   pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     GtkTreeIter iter;
     pattern_data_t *data = NULL;
     gboolean active = gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter);
 
     if (active)
-    {
         gtk_tree_model_get(GTK_TREE_MODEL(pattern_get_model(p)), &iter, PATTERN_COL_DATA, &data, -1);
-    }
 
     pattern_set_current(p, data);
     pattern_ui_sync(p, !active, FALSE);
@@ -515,6 +564,9 @@ static void
 pattern_ui_name(GtkWidget *widget,
                 pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     GtkTreeIter iter;
 
     if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
@@ -529,6 +581,9 @@ static void
 pattern_ui_freq(GtkWidget *widget,
                 pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_data_set_freq(pattern_get_current(p), gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -537,6 +592,9 @@ static void
 pattern_ui_avg(GtkWidget *widget,
                pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_signal_set_avg(pattern_data_get_signal(pattern_get_current(p)), gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -545,7 +603,12 @@ static void
 pattern_ui_color(GtkWidget *widget,
                  pattern_t *p)
 {
-    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(widget), pattern_data_get_color(pattern_get_current(p)));
+    if (pattern_get_ui(p)->lock)
+        return;
+
+    GdkRGBA color;
+    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(widget), &color);
+    pattern_data_set_color(pattern_get_current(p), &color);
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
 
@@ -612,6 +675,9 @@ static void
 pattern_ui_fill(GtkWidget *widget,
                 pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_data_set_fill(pattern_get_current(p), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
@@ -620,16 +686,18 @@ static void
 pattern_ui_rev(GtkWidget *widget,
                pattern_t *p)
 {
+    if (pattern_get_ui(p)->lock)
+        return;
+
     pattern_signal_set_rev(pattern_data_get_signal(pattern_get_current(p)), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
 
 static void
 pattern_ui_hide(GtkWidget *widget,
-                  pattern_t *p)
+                pattern_t *p)
 {
-    GtkTreeIter iter;
-    if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pattern_get_ui(p)->c_select), &iter))
+    if (pattern_get_ui(p)->lock)
         return;
 
     pattern_hide(p, pattern_get_current(p), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
@@ -638,12 +706,67 @@ pattern_ui_hide(GtkWidget *widget,
 }
 
 static void
+pattern_ui_sync_full(pattern_t *p)
+{
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+    ui->lock++;
+
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui->s_size), pattern_get_size(p));
+    gtk_entry_set_text(GTK_ENTRY(ui->e_title), pattern_get_title(p));
+
+    switch (pattern_get_scale(p))
+    {
+        default:
+        case 0:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_ARRL);
+            break;
+        case -20:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_20);
+            break;
+        case -30:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_30);
+            break;
+        case -40:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_40);
+            break;
+        case -50:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_50);
+            break;
+        case -60:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_scale), PATTERN_UI_SCALE_LINEAR_60);
+            break;
+    }
+
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui->s_line), pattern_get_line(p));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_interp), pattern_get_interp(p));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_full_angle), pattern_get_full_angle(p));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_black), pattern_get_black(p));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_normalize), pattern_get_normalize(p));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->b_legend), pattern_get_legend(p));
+
+    /* Set model */
+    gtk_combo_box_set_model(GTK_COMBO_BOX(ui->c_select), GTK_TREE_MODEL(pattern_get_model(p)));
+
+    pattern_ui_sync(p, TRUE, FALSE);
+    g_signal_emit_by_name(ui->s_size, "value-changed", p);
+    ui->lock--;
+
+    if(gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(p)), NULL))
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->c_select), 0);
+
+    pattern_ui_window_set_title(pattern_get_ui(p), pattern_get_filename(p));
+    gtk_widget_queue_draw(pattern_get_ui(p)->plot);
+}
+
+static void
 pattern_ui_sync(pattern_t *p,
                 gboolean   lock,
                 gboolean   live)
 {
+    pattern_ui_window_t *ui = pattern_get_ui(p);
     gboolean active = !lock;
 
+    ui->lock++;
     pattern_ui_sync_name(p, FALSE);
     pattern_ui_sync_freq(p, FALSE);
     pattern_ui_sync_avg(p, FALSE);
@@ -651,6 +774,11 @@ pattern_ui_sync(pattern_t *p,
     pattern_ui_sync_hide(p, FALSE);
     pattern_ui_sync_fill(p, FALSE);
     pattern_ui_sync_rev(p, FALSE);
+
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_new, (lock && live) ? FALSE : TRUE);
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_load, (lock && live) ? FALSE : TRUE);
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_save, (lock && live) ? FALSE : TRUE);
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_render, (lock && live) ? FALSE : TRUE);
 
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_add, (lock && live) ? FALSE : TRUE);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_down, active);
@@ -677,6 +805,8 @@ pattern_ui_sync(pattern_t *p,
         gtk_widget_set_sensitive(pattern_get_ui(p)->b_rev, active);
         gtk_widget_set_sensitive(pattern_get_ui(p)->b_hide, active);
     }
+
+    ui->lock--;
 }
 
 static void
@@ -862,9 +992,11 @@ pattern_ui_sync_name(pattern_t *p,
 {
     pattern_data_t *data = pattern_get_current(p);
     const gchar *name = data ? pattern_data_get_name(data) : "";
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_entry_set_text(GTK_ENTRY(pattern_get_ui(p)->e_name), name);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->e_name), GINT_TO_POINTER(pattern_ui_name), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -879,9 +1011,11 @@ pattern_ui_sync_freq(pattern_t *p,
 {
     pattern_data_t *data = pattern_get_current(p);
     gint freq = data ? pattern_data_get_freq(data) : 0;
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_freq), freq);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_freq), GINT_TO_POINTER(pattern_ui_freq), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -895,9 +1029,11 @@ pattern_ui_sync_avg(pattern_t *p,
 {
     pattern_data_t *data = pattern_get_current(p);
     gint avg = data ? pattern_signal_get_avg(pattern_data_get_signal(data)) : 0;
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(pattern_get_ui(p)->s_avg), avg);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->s_avg), GINT_TO_POINTER(pattern_ui_avg), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -912,9 +1048,11 @@ pattern_ui_sync_color(pattern_t *p,
     static const GdkRGBA default_color = {0};
     pattern_data_t *data = pattern_get_current(p);
     const GdkRGBA *color = data ? pattern_data_get_color(data) : &default_color;
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(pattern_get_ui(p)->b_color), color);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_color), GINT_TO_POINTER(pattern_ui_color), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -928,9 +1066,11 @@ pattern_ui_sync_hide(pattern_t *p,
 {
     pattern_data_t *data = pattern_get_current(p);
     gboolean hide = data ? pattern_data_get_hide(data) : FALSE;
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_hide), hide);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_hide), GINT_TO_POINTER(pattern_ui_hide), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -944,9 +1084,11 @@ pattern_ui_sync_fill(pattern_t *p,
 {
     pattern_data_t *data = pattern_get_current(p);
     gboolean fill = data ? pattern_data_get_fill(data) : FALSE;
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_fill), fill);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_fill), GINT_TO_POINTER(pattern_ui_fill), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -960,9 +1102,11 @@ pattern_ui_sync_rev(pattern_t *p,
 {
     pattern_data_t *data = pattern_get_current(p);
     gboolean rev = data ? pattern_signal_get_rev(pattern_data_get_signal(data)) : FALSE;
-    g_signal_handlers_block_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
+    pattern_ui_window_t *ui = pattern_get_ui(p);
+
+    ui->lock++;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pattern_get_ui(p)->b_rev), rev);
-    g_signal_handlers_unblock_by_func(G_OBJECT(pattern_get_ui(p)->b_rev), GINT_TO_POINTER(pattern_ui_rev), p);
+    ui->lock--;
 
     if (redraw)
     {
@@ -989,4 +1133,3 @@ pattern_ui_live(pattern_t *p,
 
     gtk_widget_queue_draw(pattern_get_ui(p)->plot);
 }
-

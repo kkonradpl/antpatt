@@ -73,7 +73,7 @@ gint
 main(gint   argc,
      gchar *argv[])
 {
-    pattern_t *p = NULL;
+    pattern_t *p = pattern_new();
     gchar *error = NULL;
 
     gtk_disable_setlocale();
@@ -86,21 +86,17 @@ main(gint   argc,
 
     if (args.project)
     {
-        p = pattern_json_load(args.project, &error);
-        if (p == NULL)
+        if (!pattern_json_load(p, args.project, &error))
         {
             fprintf(stderr, "Error: %s\n", error);
             g_free(error);
         }
     }
 
-    if (p == NULL)
-        p = pattern_new();
-
     pattern_set_ui(p, pattern_ui_window_new());
 
     if (args.interactive)
-        pattern_ipc_init();
+        pattern_ipc_init(p);
 
     gtk_main();
 

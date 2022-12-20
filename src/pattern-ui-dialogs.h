@@ -18,6 +18,8 @@
 
 void pattern_ui_dialog(GtkWindow*, GtkMessageType, gchar*, gchar*, ...);
 gboolean pattern_ui_dialog_yesno(GtkWindow*, const gchar*, const gchar*);
+gint pattern_ui_dialog_ask_unsaved(GtkWindow*);
+
 gchar* pattern_ui_dialog_open(GtkWindow*);
 gchar* pattern_ui_dialog_save(GtkWindow*);
 GSList* pattern_ui_dialog_import(GtkWindow*);

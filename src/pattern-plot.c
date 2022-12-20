@@ -15,6 +15,7 @@
 
 #include <gtk/gtk.h>
 #include <math.h>
+#include <cairo-svg.h>
 #include "pattern.h"
 #include "pattern-ui-dialogs.h"
 #include "pattern-misc.h"
@@ -224,7 +225,8 @@ pattern_plot_grid(cairo_t        *cr,
                 y = plot->offset+plot->radius+cos(DEG2RAD(i))*l;
                 cairo_set_line_width(cr, plot->width/(PATTERN_BASE_SIZE/(PATTERN_LINE_WIDTH/2.0)));
                 cairo_arc(cr, x, y, 0.5, 0, 2*M_PI);
-                cairo_stroke(cr);
+                cairo_stroke_preserve(cr);
+                cairo_fill(cr);
             }
         }
 
@@ -687,17 +689,45 @@ pattern_plot_to_file(pattern_t   *p,
 {
     cairo_surface_t *surface;
     cairo_t *cr;
-    gboolean ret;
-    gint size;
+    gboolean ret = FALSE;
+    gint size = pattern_get_size(p);
+    gchar *ext = strrchr(filename, '.');
+    gboolean png;
 
-    size = pattern_get_size(p);
-    surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
+    if (ext && g_ascii_strcasecmp(ext, ".svg") == 0)
+    {
+        /* SVG vector file */
+        surface = cairo_svg_surface_create(filename, size, size);
+        png = FALSE;
+    }
+    else
+    {
+        /* Other: PNG file */
+        surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
+        png = TRUE;
+    }
+
+    if (surface == NULL)
+        return FALSE;
+
+    if (cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS)
+    {
+        cairo_surface_destroy(surface);
+        return FALSE;
+    }
 
     cr = cairo_create(surface);
-    pattern_plot_cairo(cr, p);
-    cairo_destroy(cr);
+    if (cr)
+    {
+        pattern_plot_cairo(cr, p);
+        cairo_destroy(cr);
 
-    ret = cairo_surface_write_to_png(surface, filename) == CAIRO_STATUS_SUCCESS;
+        if (png)
+            ret = cairo_surface_write_to_png(surface, filename) == CAIRO_STATUS_SUCCESS;
+        else
+            ret = cairo_surface_status(surface) == CAIRO_STATUS_SUCCESS;
+    }
+
     cairo_surface_destroy(surface);
     return ret;
 }

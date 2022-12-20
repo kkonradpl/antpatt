@@ -208,6 +208,12 @@ pattern_ui_dialog_render(GtkWindow *window)
     g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".png"), g_free);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
+    filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "SVG image");
+    gtk_file_filter_add_pattern(filter, "*.svg");
+    g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".svg"), g_free);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
     g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &filename);
     while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
 

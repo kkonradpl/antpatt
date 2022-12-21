@@ -26,21 +26,24 @@ typedef struct antpatt_arg
 {
     gboolean interactive;
     const char *project;
+    gboolean dark_theme;
 } antpatt_arg_t;
 
 static antpatt_arg_t args =
 {
     .interactive = FALSE,
-    .project = NULL
+    .project = NULL,
+    .dark_theme = FALSE
 };
 
 static void
 antpatt_usage(void)
 {
     printf("antpatt " APP_VERSION " - antenna pattern plotting and analysis software\n");
-    printf("usage: antpatt [-i] project\n");
+    printf("usage: antpatt [-i] [-d] project\n");
     printf("options:\n");
     printf("  -i  interactive console mode\n");
+    printf("  -d  prefer dark theme\n");
 }
 
 static void
@@ -48,7 +51,7 @@ parse_args(gint   argc,
            gchar *argv[])
 {
     gint c;
-    while ((c = getopt(argc, argv, "hi")) != -1)
+    while ((c = getopt(argc, argv, "hid")) != -1)
     {
         switch (c)
         {
@@ -59,6 +62,9 @@ parse_args(gint   argc,
             case 'i':
                 args.interactive = TRUE;
                 break;
+
+            case 'd':
+                args.dark_theme = TRUE;
 
             default:
                 break;
@@ -83,6 +89,9 @@ main(gint   argc,
 #ifdef G_OS_WIN32
     mingw_init();
 #endif
+
+    if (args.dark_theme)
+        g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE, NULL);
 
     if (args.project)
     {

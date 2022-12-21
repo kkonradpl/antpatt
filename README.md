@@ -5,7 +5,7 @@ Antenna pattern plotting and analysis software.
 
 ![Screenshot](/antpatt.png?raw=true)
 
-Copyright (C) 2017-2021  Konrad Kosmatka
+Copyright (C) 2017-2022  Konrad Kosmatka
 
 https://fmdx.pl/antpatt/
 
@@ -18,12 +18,10 @@ In order to build antpatt you will need:
 - C compiler
 
 You will also need several dependencies:
-- GTK+ 2 & dependencies
+- GTK+ 3 & dependencies
 - GSL
 - JSON-C
 - zlib
-
-GTK+ 3 is also partially supported (requires CMakeLists modification).
 
 Once you have all the necessary dependencies, you can use scripts available in the `build` directory.
 

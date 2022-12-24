@@ -778,6 +778,7 @@ pattern_ui_sync(pattern_t *p,
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_new, (lock && live) ? FALSE : TRUE);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_load, (lock && live) ? FALSE : TRUE);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_save, (lock && live) ? FALSE : TRUE);
+    gtk_widget_set_sensitive(pattern_get_ui(p)->b_save_as, (lock && live) ? FALSE : TRUE);
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_render, (lock && live) ? FALSE : TRUE);
 
     gtk_widget_set_sensitive(pattern_get_ui(p)->b_add, (lock && live) ? FALSE : TRUE);

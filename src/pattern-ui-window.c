@@ -19,6 +19,9 @@
 #include "pattern-data.h"
 #include "pattern-signal.h"
 #include "pattern.h"
+#ifdef G_OS_WIN32
+#include "mingw.h"
+#endif
 
 static gboolean pattern_ui_window_delete(pattern_ui_window_t*);
 static gboolean pattern_ui_window_attach(pattern_ui_window_t*);
@@ -30,6 +33,9 @@ pattern_ui_window_new()
     pattern_ui_window_t *ui = g_malloc0(sizeof(pattern_ui_window_t));
 
     ui->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#ifdef G_OS_WIN32
+    g_signal_connect(ui->window, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_window_set_title(GTK_WINDOW(ui->window), APP_TITLE);
     gtk_window_set_icon_name(GTK_WINDOW(ui->window), APP_ICON);
     gtk_window_set_resizable(GTK_WINDOW(ui->window), FALSE);
@@ -37,6 +43,9 @@ pattern_ui_window_new()
     gtk_container_set_border_width(GTK_CONTAINER(ui->window), 5);
 
     ui->window_plot = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#ifdef G_OS_WIN32
+    g_signal_connect(ui->window_plot, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_window_set_title(GTK_WINDOW(ui->window_plot), APP_TITLE_PLOT);
     gtk_window_set_icon_name(GTK_WINDOW(ui->window_plot), APP_ICON);
     gtk_window_set_resizable(GTK_WINDOW(ui->window_plot), FALSE);

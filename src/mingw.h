@@ -22,5 +22,6 @@ void mingw_cleanup(void);
 gchar* strsep(gchar**, const gchar*);
 
 gboolean mingw_uri_signal(GtkWidget*, gchar*, gpointer);
+void mingw_realize(GtkWidget*, gpointer);
 
 #endif

@@ -43,6 +43,9 @@ pattern_ui_dialog(GtkWindow      *window,
                                     icon,
                                     GTK_BUTTONS_CLOSE,
                                     NULL);
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), msg);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
     if(!window)
@@ -65,7 +68,9 @@ pattern_ui_dialog_yesno(GtkWindow   *parent,
                                     GTK_MESSAGE_QUESTION,
                                     GTK_BUTTONS_YES_NO,
                                     NULL);
-
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), text);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
     response = gtk_dialog_run(GTK_DIALOG(dialog));
@@ -84,6 +89,9 @@ pattern_ui_dialog_ask_unsaved(GtkWindow *parent)
                                     GTK_MESSAGE_QUESTION,
                                     GTK_BUTTONS_NONE,
                                     "There are some unsaved changes.\nDo you want to save them?");
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_dialog_add_buttons(GTK_DIALOG(dialog),
                            "_Cancel", GTK_RESPONSE_CANCEL,
                            "_Save", GTK_RESPONSE_YES,
@@ -109,6 +117,9 @@ pattern_ui_dialog_open(GtkWindow *window)
                                          "_Cancel", GTK_RESPONSE_CANCEL,
                                          "_Open", GTK_RESPONSE_ACCEPT,
                                          NULL);
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
 
     filter = gtk_file_filter_new();
     gtk_file_filter_set_name(filter, "Antenna pattern project (*.antp.gz, *.antp)");
@@ -137,7 +148,9 @@ pattern_ui_dialog_save(GtkWindow *window)
                                          "_Cancel", GTK_RESPONSE_CANCEL,
                                          "_Save", GTK_RESPONSE_ACCEPT,
                                          NULL);
-
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(dialog), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 
@@ -176,7 +189,9 @@ pattern_ui_dialog_import(GtkWindow *window)
                                          "_Cancel", GTK_RESPONSE_CANCEL,
                                          "_Open", GTK_RESPONSE_ACCEPT,
                                          NULL);
-
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
     if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
         list = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
@@ -198,7 +213,9 @@ pattern_ui_dialog_render(GtkWindow *window)
                                          "_Cancel", GTK_RESPONSE_CANCEL,
                                          "_Save", GTK_RESPONSE_ACCEPT,
                                          NULL);
-
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(dialog), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 
@@ -233,7 +250,9 @@ pattern_ui_dialog_export(GtkWindow *window)
                                          "_Cancel", GTK_RESPONSE_CANCEL,
                                          "_Save", GTK_RESPONSE_ACCEPT,
                                          NULL);
-
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(dialog), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 
@@ -314,6 +333,9 @@ void
 pattern_ui_dialog_about(GtkWindow *window)
 {
     GtkWidget *dialog = gtk_about_dialog_new();
+#ifdef G_OS_WIN32
+    g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
+#endif
     gtk_window_set_icon_name(GTK_WINDOW(dialog), "gtk-about");
     gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
     gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), APP_NAME);

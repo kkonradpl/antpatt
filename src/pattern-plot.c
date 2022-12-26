@@ -267,7 +267,8 @@ pattern_plot_radiation(cairo_t        *cr,
     pattern_signal_t *s;
     GtkTreeIter iter;
     gint show_frequency = FALSE;
-    gint last_frequency = 0;
+    gint frequency = 0;
+    gint new_frequency;
     gint i = 0;
     gdouble line_width = plot->width/(PATTERN_BASE_SIZE/PATTERN_PLOT_LINE_WIDTH) * plot->line;
 
@@ -285,12 +286,19 @@ pattern_plot_radiation(cairo_t        *cr,
 
             if(i == 0)
             {
-                last_frequency = pattern_data_get_freq(data);
+                frequency = pattern_data_get_freq(data);
                 show_frequency = TRUE;
             }
             else if(show_frequency)
             {
-                show_frequency = (last_frequency == pattern_data_get_freq(data));
+                new_frequency = pattern_data_get_freq(data);
+                if (new_frequency)
+                {
+                    if (frequency == 0)
+                        frequency = new_frequency;
+                    else
+                        show_frequency = (new_frequency == frequency);
+                }
             }
 
             pattern_plot_radiation_data(cr,
@@ -303,8 +311,8 @@ pattern_plot_radiation(cairo_t        *cr,
         } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(p)), &iter));
 
         /* draw frequency label */
-        if(show_frequency && last_frequency)
-            pattern_plot_frequency(cr, plot, last_frequency);
+        if(show_frequency && frequency)
+            pattern_plot_frequency(cr, plot, frequency);
 
         cairo_stroke(cr);
     }

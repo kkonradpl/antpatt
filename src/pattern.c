@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,8 +16,6 @@
 #include <gtk/gtk.h>
 #include <math.h>
 #include "pattern.h"
-#include "pattern-ui.h"
-#include "pattern-ipc.h"
 
 /* Default settings */
 #define PATTERN_DEFAULT_SIZE       600
@@ -32,9 +30,9 @@
 
 typedef struct pattern
 {
-    pattern_ui_window_t *ui;
-    GtkListStore        *model;
-    pattern_data_t      *current;
+    pattern_ui_t   *ui;
+    GtkListStore   *model;
+    pattern_data_t *current;
 
     gint      size;
     gchar    *title;
@@ -47,8 +45,6 @@ typedef struct pattern
     gboolean  legend;
 
     gchar    *filename;
-    gint      focus_idx;
-    gint      rotating_idx;
     gint      visible;
     gboolean  changed;
 } pattern_t;
@@ -153,7 +149,7 @@ pattern_get_model(pattern_t *p)
     return p->model;
 }
 
-pattern_ui_window_t*
+pattern_ui_t*
 pattern_get_ui(pattern_t *p)
 {
     g_assert(p != NULL);
@@ -161,15 +157,11 @@ pattern_get_ui(pattern_t *p)
 }
 
 void
-pattern_set_ui(pattern_t           *p,
-               pattern_ui_window_t *ui)
+pattern_set_ui(pattern_t    *p,
+               pattern_ui_t *ui)
 {
     g_assert(p != NULL);
-    g_assert(ui != NULL);
-    g_assert(p->ui == NULL);
-
     p->ui = ui;
-    pattern_ui_create(p);
 }
 
 void
@@ -243,8 +235,6 @@ pattern_set_current(pattern_t      *p,
 {
     g_assert(p != NULL);
     p->current = data;
-    p->focus_idx = -1;
-    p->rotating_idx = -1;
 }
 
 pattern_data_t*
@@ -463,36 +453,6 @@ pattern_get_filename(const pattern_t *p)
 {
     g_assert(p != NULL);
     return p->filename;
-}
-
-void
-pattern_set_focus_idx(pattern_t *p,
-                      gint       value)
-{
-    g_assert(p != NULL);
-    p->focus_idx = value;
-}
-
-gint
-pattern_get_focus_idx(const pattern_t *p)
-{
-    g_assert(p != NULL);
-    return p->focus_idx;
-}
-
-void
-pattern_set_rotating_idx(pattern_t *p,
-                         gint       value)
-{
-    g_assert(p != NULL);
-    p->rotating_idx = value;
-}
-
-gint
-pattern_get_rotating_idx(const pattern_t *p)
-{
-    g_assert(p != NULL);
-    return p->rotating_idx;
 }
 
 gint

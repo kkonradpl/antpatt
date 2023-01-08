@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -86,8 +86,6 @@ typedef struct pattern_ui_window
     GtkWidget *b_fill;
     GtkWidget *b_rev;
     GtkWidget *b_hide;
-
-    gint lock;
 } pattern_ui_window_t;
 
 pattern_ui_window_t* pattern_ui_window_new(void);

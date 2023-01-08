@@ -13,14 +13,13 @@
  *  GNU General Public License for more details.
  */
 
-#ifndef ANTPATT_PATTERN_PLOT_H_
-#define ANTPATT_PATTERN_PLOT_H_
+#ifndef ANTPATT_PATTERN_UI_PLOT_H_
+#define ANTPATT_PATTERN_UI_PLOT_H_
 
-#define PATTERN_PLOT_BASE_SIZE    500.0
-#define PATTERN_PLOT_OFFSET        32.0
-#define PATTERN_PLOT_BORDER_WIDTH   1.0
+gboolean pattern_ui_plot(GtkWidget*, cairo_t*, pattern_ui_t*);
 
-void pattern_plot(cairo_t*, pattern_t*);
-gboolean pattern_plot_to_file(const gchar*, pattern_t*);
+gboolean pattern_ui_plot_motion(GtkWidget*, GdkEventMotion*, pattern_ui_t*);
+gboolean pattern_ui_plot_click(GtkWidget*, GdkEventButton*, pattern_ui_t*);
+gboolean pattern_ui_plot_leave(GtkWidget*, GdkEvent*, pattern_ui_t*);
 
 #endif

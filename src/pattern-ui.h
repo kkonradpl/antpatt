@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -17,16 +17,28 @@
 #define ANTPATT_PATTERN_UI_H_
 #include "pattern.h"
 
-void pattern_ui_create(pattern_t*);
+typedef struct pattern pattern_t;
+typedef struct pattern_ui pattern_ui_t;
 
-void pattern_ui_sync_name(pattern_t*, gboolean);
-void pattern_ui_sync_freq(pattern_t*, gboolean);
-void pattern_ui_sync_avg(pattern_t*, gboolean);
-void pattern_ui_sync_color(pattern_t*, gboolean);
-void pattern_ui_sync_hide(pattern_t*, gboolean);
-void pattern_ui_sync_fill(pattern_t*, gboolean);
-void pattern_ui_sync_rev(pattern_t*, gboolean);
+pattern_ui_t* pattern_ui(pattern_t*);
 
-void pattern_ui_live(pattern_t*, gboolean);
+void pattern_ui_sync_name(pattern_ui_t*, gboolean);
+void pattern_ui_sync_freq(pattern_ui_t*, gboolean);
+void pattern_ui_sync_avg(pattern_ui_t*, gboolean);
+void pattern_ui_sync_color(pattern_ui_t*, gboolean);
+void pattern_ui_sync_hide(pattern_ui_t*, gboolean);
+void pattern_ui_sync_fill(pattern_ui_t*, gboolean);
+void pattern_ui_sync_rev(pattern_ui_t*, gboolean);
+void pattern_ui_sync_data(pattern_ui_t*);
+
+pattern_t* pattern_ui_get_pattern(pattern_ui_t*);
+GtkWindow* pattern_ui_get_plot_window(pattern_ui_t*);
+
+void pattern_ui_set_focus_idx(pattern_ui_t*, gint);
+gint pattern_ui_get_focus_idx(const pattern_ui_t*);
+void pattern_ui_set_rotating_idx(pattern_ui_t*, gint);
+gint pattern_ui_get_rotating_idx(const pattern_ui_t*);
+
+void pattern_ui_interactive(pattern_ui_t*, gboolean);
 
 #endif

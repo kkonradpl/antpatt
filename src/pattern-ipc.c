@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2022  Konrad Kosmatka
+ *  Copyright (c) 2022-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -39,8 +39,9 @@ static const gchar response_error[] = "ERROR";
 static GIOChannel *channel_stdin = NULL;
 
 static gboolean handle_stdin(GIOChannel*, GIOCondition, gpointer);
-static gboolean parse_command(pattern_t*, gchar*);
+static void parse_command(pattern_t*, gchar*);
 static void send_response(const gchar*);
+static gboolean set_running(pattern_t*, gboolean);
 
 static pattern_t *instance = NULL;
 
@@ -82,26 +83,33 @@ handle_stdin(GIOChannel   *source,
     g_autofree gchar *buff = NULL;
     GIOStatus status;
 
-    if (instance == NULL)
-        return G_SOURCE_CONTINUE;
-
     status = g_io_channel_read_line(source, &buff, NULL, NULL, NULL);
+
+    if (instance == NULL)
+    {
+        send_response(response_error);
+        return G_SOURCE_CONTINUE;
+    }
+
     switch (status)
     {
         case G_IO_STATUS_AGAIN:
             return G_SOURCE_CONTINUE;
         case G_IO_STATUS_NORMAL:
-            return parse_command(instance, buff);
+            parse_command(instance, buff);
+            return G_SOURCE_CONTINUE;
         default:
-            return parse_command(instance, NULL);
+            parse_command(instance, NULL);
+            return G_SOURCE_REMOVE;
     }
 }
 
-static gboolean
+static void
 parse_command(pattern_t *p,
               gchar     *command)
 {
     pattern_data_t *current = pattern_get_current(p);
+    pattern_ui_t *ui = pattern_get_ui(p);
     static gboolean running = FALSE;
     gchar *value = command;
     gboolean ack = FALSE;
@@ -109,43 +117,39 @@ parse_command(pattern_t *p,
     if (command == NULL)
     {
         if (running)
-        {
-            pattern_ui_live(p, FALSE);
-            running = FALSE;
-        }
-        return G_SOURCE_REMOVE;
+            running = set_running(p, FALSE);
+        return;
     }
 
     g_strchomp(command);
     strsep(&value, " ");
 
-    if (!running)
+    if (g_ascii_strcasecmp(command, command_start) == 0)
     {
-        if (g_ascii_strcasecmp(command, command_start) == 0)
-        {
-            pattern_data_t *data = pattern_data_new(pattern_signal_new());
-            GdkRGBA color = pattern_color_next();
-            pattern_data_set_name(data, "Measurement");
-            pattern_data_set_color(data, &color);
-            pattern_add(p, data);
+        if (running)
+            running = set_running(p, FALSE);
 
-            pattern_ui_live(p, TRUE);
-            running = TRUE;
-            ack = TRUE;
-        }
+        pattern_data_t *data = pattern_data_new(pattern_signal_new());
+        GdkRGBA color = pattern_color_next();
+        pattern_data_set_name(data, "Measurement");
+        pattern_data_set_color(data, &color);
+        pattern_add(p, data);
+
+        running = set_running(p, TRUE);
+        ack = TRUE;
     }
-    else if (current)
+    else if (running)
     {
         if (g_ascii_strcasecmp(command, command_stop) == 0)
         {
-            pattern_ui_live(p, FALSE);
-            running = FALSE;
+            running = set_running(p, FALSE);
             ack = TRUE;
         }
         else if (g_ascii_strcasecmp(command, command_name) == 0)
         {
             pattern_data_set_name(current, value);
-            pattern_ui_sync_name(p, TRUE);
+            if (ui)
+                pattern_ui_sync_name(ui, TRUE);
             ack = TRUE;
         }
         else if (g_ascii_strcasecmp(command, command_freq) == 0)
@@ -154,7 +158,8 @@ parse_command(pattern_t *p,
             if (value && sscanf(value, "%d", &freq))
             {
                 pattern_data_set_freq(current, freq);
-                pattern_ui_sync_freq(p, TRUE);
+                if (ui)
+                    pattern_ui_sync_freq(ui, TRUE);
                 ack = TRUE;
             }
         }
@@ -164,7 +169,8 @@ parse_command(pattern_t *p,
             if (value && gdk_rgba_parse(&color, value))
             {
                 pattern_data_set_color(current, &color);
-                pattern_ui_sync_color(p, TRUE);
+                if (ui)
+                    pattern_ui_sync_color(ui, TRUE);
                 ack = TRUE;
             }
         }
@@ -175,7 +181,8 @@ parse_command(pattern_t *p,
             {
                 avg = g_ascii_strtoll(value, NULL, 10);
                 pattern_signal_set_avg(pattern_data_get_signal(current), avg);
-                pattern_ui_sync_avg(p, TRUE);
+                if (ui)
+                    pattern_ui_sync_avg(ui, TRUE);
                 ack = TRUE;
             }
         }
@@ -186,7 +193,8 @@ parse_command(pattern_t *p,
             {
                 fill = (g_ascii_strtoll(value, NULL, 10) != 0);
                 pattern_data_set_fill(current, fill);
-                pattern_ui_sync_fill(p, TRUE);
+                if (ui)
+                    pattern_ui_sync_fill(ui, TRUE);
                 ack = TRUE;
             }
         }
@@ -197,7 +205,8 @@ parse_command(pattern_t *p,
             {
                 rev = (g_ascii_strtoll(value, NULL, 10) != 0);
                 pattern_signal_set_rev(pattern_data_get_signal(current), rev);
-                pattern_ui_sync_rev(p, TRUE);
+                if (ui)
+                    pattern_ui_sync_rev(ui, TRUE);
                 ack = TRUE;
             }
         }
@@ -207,21 +216,41 @@ parse_command(pattern_t *p,
             if (value && sscanf(value, "%lf", &sample))
             {
                 pattern_signal_push(pattern_data_get_signal(current), sample);
-                gtk_widget_queue_draw(pattern_get_ui(p)->plot);
-                gtk_widget_queue_draw(pattern_get_ui(p)->c_select);
+                if (ui)
+                    pattern_ui_sync_data(ui);
                 ack = TRUE;
             }
         }
     }
 
     send_response(ack ? response_ok : response_error);
-    return G_SOURCE_CONTINUE;
 }
 
 static void
 send_response(const gchar* response)
 {
-    printf(response);
-    printf("\n");
+    fprintf(stdout,"%s", response);
+    fprintf(stdout,"\n");
     fflush(stdout);
+}
+
+static gboolean
+set_running(pattern_t *p,
+            gboolean   running)
+{
+    pattern_data_t *data = pattern_get_current(p);
+    pattern_ui_t *ui = pattern_get_ui(p);
+
+    if (!running &&
+        data)
+    {
+        pattern_signal_set_finished(pattern_data_get_signal(data));
+    }
+
+    if (ui)
+    {
+        pattern_ui_interactive(ui, running);
+    }
+
+    return running;
 }

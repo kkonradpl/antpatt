@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,7 +16,6 @@
 #ifndef ANTPATT_PATTERN_H_
 #define ANTPATT_PATTERN_H_
 #include "version.h"
-#include "pattern-ui-window.h"
 #include "pattern-data.h"
 
 #define PATTERN_MIN_SIZE 350
@@ -32,6 +31,7 @@ enum
 };
 
 typedef struct pattern pattern_t;
+typedef struct pattern_ui pattern_ui_t;
 
 pattern_t* pattern_new(void);
 void       pattern_free(pattern_t*);
@@ -40,9 +40,9 @@ gboolean pattern_changed(const pattern_t*);
 void     pattern_unchanged(pattern_t*);
 void     pattern_reset(pattern_t*);
 
-GtkListStore*        pattern_get_model(pattern_t*);
-void                 pattern_set_ui(pattern_t*, pattern_ui_window_t*);
-pattern_ui_window_t* pattern_get_ui(pattern_t*);
+GtkListStore*  pattern_get_model(pattern_t*);
+void           pattern_set_ui(pattern_t*, pattern_ui_t*);
+pattern_ui_t*  pattern_get_ui(pattern_t*);
 
 void pattern_add(pattern_t*, pattern_data_t*);
 void pattern_remove(pattern_t*, GtkTreeIter*);
@@ -72,10 +72,6 @@ gboolean     pattern_get_legend(const pattern_t*);
 
 void         pattern_set_filename(pattern_t*, const gchar*);
 const gchar* pattern_get_filename(const pattern_t*);
-void         pattern_set_focus_idx(pattern_t*, gint);
-gint         pattern_get_focus_idx(const pattern_t*);
-void         pattern_set_rotating_idx(pattern_t*, gint);
-gint         pattern_get_rotating_idx(const pattern_t*);
 
 gint    pattern_get_visible_count(const pattern_t*);
 gdouble pattern_get_peak(const pattern_t*);

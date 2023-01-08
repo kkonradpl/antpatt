@@ -24,6 +24,8 @@ set(SOURCE_FILES
         pattern-signal.h
         pattern-ui-dialogs.c
         pattern-ui-dialogs.h
+        pattern-ui-plot.c
+        pattern-ui-plot.h
         pattern-ui-window.c
         pattern-ui-window.h
         pattern-ui.c

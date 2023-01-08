@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -93,7 +93,7 @@ pattern_ui_window_new()
 
     ui->b_about = gtk_button_new();
     gtk_widget_set_tooltip_text(GTK_WIDGET(ui->b_about), "About...");
-    gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("help-about-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR));
+    gtk_button_set_image(GTK_BUTTON(ui->b_about), gtk_image_new_from_icon_name("help-about-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR));
     gtk_box_pack_start(GTK_BOX(ui->box_buttons), ui->b_about, FALSE, FALSE, 0);
 
     ui->box_header1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);

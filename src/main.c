@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
 #include <gtk/gtk.h>
 #include <getopt.h>
 #include "pattern.h"
+#include "pattern-ui.h"
 #include "pattern-ipc.h"
 #include "pattern-json.h"
 #ifdef G_OS_WIN32
@@ -102,7 +103,7 @@ main(gint   argc,
         }
     }
 
-    pattern_set_ui(p, pattern_ui_window_new());
+    pattern_ui(p);
 
     if (args.interactive)
         pattern_ipc_init(p);
@@ -113,5 +114,9 @@ main(gint   argc,
     mingw_cleanup();
 #endif
 
+    if (args.interactive)
+        pattern_ipc_cleanup();
+
+    pattern_free(p);
     return 0;
 }

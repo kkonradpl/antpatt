@@ -56,19 +56,19 @@ parse_args(gint   argc,
     {
         switch (c)
         {
-            case 'h':
-                antpatt_usage();
-                exit(0);
+        case 'h':
+            antpatt_usage();
+            exit(0);
 
-            case 'i':
-                args.interactive = TRUE;
-                break;
+        case 'i':
+            args.interactive = TRUE;
+            break;
 
-            case 'd':
-                args.dark_theme = TRUE;
+        case 'd':
+            args.dark_theme = TRUE;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 

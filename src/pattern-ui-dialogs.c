@@ -21,8 +21,9 @@
 #include "mingw.h"
 #endif
 
-static void pattern_ui_dialog_file_chooser_response(GtkWidget*, gint, gpointer);
+static void file_chooser_response(GtkWidget*, gint, gpointer);
 static gboolean str_has_suffix(const gchar*, const gchar*);
+
 
 void
 pattern_ui_dialog(GtkWindow      *window,
@@ -48,7 +49,7 @@ pattern_ui_dialog(GtkWindow      *window,
 #endif
     gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), msg);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
-    if(!window)
+    if (window == NULL)
         gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
@@ -127,7 +128,7 @@ pattern_ui_dialog_open(GtkWindow *window)
     gtk_file_filter_add_pattern(filter, "*" APP_FILE_EXT APP_FILE_COMPRESS);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
         filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
     gtk_widget_destroy(dialog);
 
@@ -171,8 +172,8 @@ pattern_ui_dialog_save(GtkWindow *window)
     g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(APP_FILE_EXT), g_free);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &ret);
-    while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
+    g_signal_connect(dialog, "response", G_CALLBACK(file_chooser_response), &ret);
+    while (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
 
     return ret;
 }
@@ -193,7 +194,7 @@ pattern_ui_dialog_import(GtkWindow *window)
     g_signal_connect(dialog, "realize", G_CALLBACK(mingw_realize), NULL);
 #endif
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
-    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
         list = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
     gtk_widget_destroy(dialog);
 
@@ -231,8 +232,8 @@ pattern_ui_dialog_render(GtkWindow *window)
     g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".svg"), g_free);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &filename);
-    while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
+    g_signal_connect(dialog, "response", G_CALLBACK(file_chooser_response), &filename);
+    while (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
 
     return filename;
 }
@@ -268,28 +269,28 @@ pattern_ui_dialog_export(GtkWindow *window)
     g_object_set_data_full(G_OBJECT(filter), "antpatt-ext", g_strdup(".ant"), g_free);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    g_signal_connect(dialog, "response", G_CALLBACK(pattern_ui_dialog_file_chooser_response), &filename);
-    while(gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
+    g_signal_connect(dialog, "response", G_CALLBACK(file_chooser_response), &filename);
+    while (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_NONE);
 
     return filename;
 }
 
 static void
-pattern_ui_dialog_file_chooser_response(GtkWidget *dialog,
-                                        gint       response_id,
-                                        gpointer   user_data)
+file_chooser_response(GtkWidget *dialog,
+                      gint       response_id,
+                      gpointer   user_data)
 {
     gchar **ret = (gchar**)user_data;
     gchar *filename;
     GtkFileFilter *filter;
 
-    if(response_id != GTK_RESPONSE_ACCEPT)
+    if (response_id != GTK_RESPONSE_ACCEPT)
     {
         gtk_widget_destroy(dialog);
         return;
     }
 
-    if(!(filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog))))
+    if (!(filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog))))
     {
         pattern_ui_dialog(GTK_WINDOW(dialog),
                           GTK_MESSAGE_ERROR,
@@ -299,7 +300,7 @@ pattern_ui_dialog_file_chooser_response(GtkWidget *dialog,
     }
 
     filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(dialog));
-    const gchar* ext = g_object_get_data(G_OBJECT(filter), "antpatt-ext");
+    const gchar *ext = g_object_get_data(G_OBJECT(filter), "antpatt-ext");
     if (!str_has_suffix(filename, ext))
     {
         filename = (gchar*)g_realloc(filename, strlen(filename) + strlen(ext) + 1);
@@ -323,7 +324,7 @@ str_has_suffix(const gchar *string,
     size_t string_len = strlen(string);
     size_t suffix_len = strlen(suffix);
 
-    if(string_len < suffix_len)
+    if (string_len < suffix_len)
         return FALSE;
 
     return g_ascii_strncasecmp(string + string_len - suffix_len, suffix, suffix_len) == 0;

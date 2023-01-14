@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2022  Konrad Kosmatka
+ *  Copyright (c) 2022-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ pattern_export(pattern_data_t *data,
     g_assert(filename != NULL);
 
     FILE *fp = g_fopen(filename, "w");
-    if (!fp)
+    if (fp == NULL)
         return FALSE;
 
     gchar *ext = strrchr(filename, '.');

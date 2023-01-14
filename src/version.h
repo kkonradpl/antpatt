@@ -20,7 +20,7 @@
 #define APP_TITLE_PLOT    "Plot"
 #define APP_NAME          "antpatt"
 #define APP_ICON          "antpatt"
-#define APP_VERSION       "1.1-git"
+#define APP_VERSION       "1.1"
 #define APP_COPYRIGHT     "2017-2023"
 #define APP_FILE_EXT      ".antp"
 #define APP_FILE_COMPRESS ".gz"

@@ -26,7 +26,7 @@ enum
     PATTERN_UI_SCALE_LINEAR_60
 };
 
-typedef struct pattern_ui_window
+struct pattern_ui_window
 {
     GtkWidget *window;
     GtkWidget *window_plot;
@@ -86,9 +86,9 @@ typedef struct pattern_ui_window
     GtkWidget *b_fill;
     GtkWidget *b_rev;
     GtkWidget *b_hide;
-} pattern_ui_window_t;
+};
 
-pattern_ui_window_t* pattern_ui_window_new(void);
-void pattern_ui_window_set_title(pattern_ui_window_t*, const gchar*);
+struct pattern_ui_window* pattern_ui_window_new(void);
+void pattern_ui_window_set_title(struct pattern_ui_window*, const gchar*);
 
 #endif

@@ -15,7 +15,6 @@
 
 #ifndef ANTPATT_PATTERN_UI_H_
 #define ANTPATT_PATTERN_UI_H_
-#include "pattern.h"
 
 typedef struct pattern pattern_t;
 typedef struct pattern_ui pattern_ui_t;

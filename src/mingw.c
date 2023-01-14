@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -56,7 +56,7 @@ strsep(gchar       **string,
     gchar *start = *string;
     gchar *p = (start ? strpbrk(start, del) : NULL);
 
-    if(!p)
+    if (p == NULL)
     {
         *string = NULL;
     }

@@ -15,12 +15,13 @@
 
 #include <gtk/gtk.h>
 #include <math.h>
+#include "pattern.h"
 #include "pattern-ui.h"
 #include "pattern-ui-dialogs.h"
 #include "pattern-plot.h"
 #include "pattern-misc.h"
 
-#define RAD2DEG(RAD) ((RAD)*180.0/M_PI)
+#define RAD2DEG(RAD) ((RAD) * 180.0 / M_PI)
 
 
 gboolean
@@ -68,13 +69,14 @@ pattern_ui_plot_motion(GtkWidget      *widget,
     x = event->x - (offset + radius);
     y = event->y - (offset + radius);
     angle = RAD2DEG(atan2(y, x) + M_PI / 2.0);
-    if(angle < 0.0)
+    if (angle < 0.0)
         angle += 360.0;
 
     step = 360.0 / count;
     i = (gint)lround(angle / step) % count;
     rotating = pattern_ui_get_rotating_idx(ui);
-    if(rotating != -1 && i != rotating)
+    if (rotating != -1 &&
+        i != rotating)
     {
         pattern_signal_rotate(pattern_data_get_signal(data),
                               pattern_ui_get_rotating_idx(ui) - i);
@@ -128,8 +130,8 @@ pattern_ui_plot_click(GtkWidget      *widget,
     line_width = width / (PATTERN_PLOT_BASE_SIZE / PATTERN_PLOT_BORDER_WIDTH);
     radius = width / 2.0 - offset + line_width;
 
-    if(event->type == GDK_BUTTON_RELEASE &&
-       event->button == 1)
+    if (event->type == GDK_BUTTON_RELEASE &&
+        event->button == 1)
     {
         /* Left button release */
         if (pattern_ui_get_rotating_idx(ui) != -1)

@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -17,6 +17,6 @@
 #define ANTPATT_PATTERN_COLOR_H_
 
 GdkRGBA pattern_color_next(void);
-char* pattern_color_to_string(const GdkRGBA*);
+gchar* pattern_color_to_string(const GdkRGBA*);
 
 #endif

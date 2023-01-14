@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -33,7 +33,6 @@ typedef struct pattern_signal
     gboolean changed;
 } pattern_signal_t;
 
-static gdouble pattern_signal_sample(const pattern_signal_t*, gint, gint);
 static gint pattern_signal_idx(const pattern_signal_t*, gint);
 static void pattern_signal_interp_init(pattern_signal_t*);
 static void pattern_signal_interp_invalidate(pattern_signal_t*);
@@ -59,13 +58,16 @@ pattern_signal_new()
 void
 pattern_signal_free(pattern_signal_t *s)
 {
-    if(s)
+    if (s != NULL)
     {
         g_array_free(s->arr, TRUE);
-        if(s->acc)
+
+        if (s->acc != NULL)
             gsl_interp_accel_free(s->acc);
-        if(s->spline)
+
+        if (s->spline != NULL)
             gsl_spline_free(s->spline);
+
         g_free(s);
     }
 }
@@ -96,29 +98,8 @@ pattern_signal_interp(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
     gint count = pattern_signal_count(s);
-
-    if(count >= 1024)
-        return 1;
-    else if(count >= 512)
-        return 2;
-    else if(count >= 256)
-        return 4;
-    else if(count >= 128)
-        return 8;
-    else if(count >= 64)
-        return 16;
-    else if(count >= 32)
-        return 32;
-    else if(count >= 16)
-        return 64;
-    else if(count >= 8)
-        return 128;
-    else if(count >= 4)
-        return 256;
-    else if(count >= 2)
-        return 512;
-    else
-        return 1024;
+    gint value = (count ? 1024 / count : 1);
+    return value ? value : 1;
 }
 
 void
@@ -131,8 +112,11 @@ pattern_signal_push(pattern_signal_t *s,
     s->count++;
     s->changed = TRUE;
 
-    if (isnan(s->peak) || s->peak < val)
+    if (isnan(s->peak) ||
+        s->peak < val)
+    {
         s->peak = val;
+    }
 
     pattern_signal_interp_invalidate(s);
 }
@@ -144,30 +128,22 @@ pattern_signal_get_sample(const pattern_signal_t *s,
     g_assert(s != NULL);
     g_assert(s->count != 0);
 
-    return pattern_signal_sample(s, idx, s->avg);
-}
-
-static gdouble
-pattern_signal_sample(const pattern_signal_t *s,
-                      gint                    idx,
-                      gint                    avg)
-{
     gdouble val;
     gint i;
 
-    if(s->rev)
+    if (s->rev)
         idx = s->count - idx;
 
     idx += s->rotate;
     val = pattern_signal_get_sample_raw(s, idx);
-    if(avg > 0)
+    if (s->avg > 0)
     {
-        for(i=1; i<=avg; i++)
+        for (i = 1; i <= s->avg; i++)
         {
            val += pattern_signal_get_sample_raw(s, idx-i);
            val += pattern_signal_get_sample_raw(s, idx+i);
         }
-        val /= avg*2.0 + 1.0;
+        val /= s->avg * 2.0 + 1.0;
     }
     return val;
 }
@@ -176,7 +152,7 @@ static gint
 pattern_signal_idx(const pattern_signal_t *s,
                    gint                    idx)
 {
-    if(idx < 0)
+    if (idx < 0)
         return s->count - 1 + ((idx + 1) % s->count);
     else
         return idx % s->count;
@@ -203,13 +179,13 @@ pattern_signal_get_sample_interp(pattern_signal_t *s,
     g_assert(s != NULL);
     g_assert(s->count != 0);
 
-    if(!s->acc && !s->spline)
+    if (!s->acc && !s->spline)
         pattern_signal_interp_init(s);
 
-    if(s->rev)
+    if (s->rev)
     {
         idx_new = s->count - 1 - idx;
-        if(frac == 0.0)
+        if (frac == 0.0)
             idx_new++;
         else
             frac = 1.0 - frac;
@@ -222,13 +198,13 @@ pattern_signal_get_sample_interp(pattern_signal_t *s,
     idx_new = pattern_signal_idx(s, idx_new+s->rotate);
     val = gsl_spline_eval(s->spline, idx_new+frac, s->acc);
 
-    if(s->interp == PATTERN_INTERP_AKIMA_CLIPPED)
+    if (s->interp == PATTERN_INTERP_AKIMA_CLIPPED)
     {
         current = pattern_signal_get_sample(s, idx);
         next = pattern_signal_get_sample(s, idx+1);
-        if(val < current && val < next)
+        if (val < current && val < next)
             val = MIN(current, next);
-        if(val > current && val > next)
+        if (val > current && val > next)
             val = MAX(current, next);
     }
     return val;
@@ -253,7 +229,7 @@ pattern_signal_set_peak(pattern_signal_t *s,
     offset = peak - s->peak;
     s->peak = peak;
 
-    for(i=0; i<s->count; i++)
+    for (i = 0; i < s->count; i++)
         g_array_index(s->arr, gdouble, i) = g_array_index(s->arr, gdouble, i) + offset;
 }
 
@@ -312,9 +288,11 @@ pattern_signal_set_interp(pattern_signal_t *s,
     g_assert(s != NULL);
     g_assert(interp < PATTERN_INTERP_N);
 
-    if((s->interp == PATTERN_INTERP_LINEAR && interp != PATTERN_INTERP_LINEAR) ||
-       (s->interp != PATTERN_INTERP_LINEAR && interp == PATTERN_INTERP_LINEAR))
+    if ((s->interp == PATTERN_INTERP_LINEAR && interp != PATTERN_INTERP_LINEAR) ||
+        (s->interp != PATTERN_INTERP_LINEAR && interp == PATTERN_INTERP_LINEAR))
+    {
         pattern_signal_interp_invalidate(s);
+    }
 
     if (interp != s->interp)
     {
@@ -382,30 +360,31 @@ pattern_signal_rotate_0(pattern_signal_t *s)
     gint mainlobe = 0;
 
     g_assert(s != NULL);
-    g_assert(s->count != 0);
+    if (s->count == 0)
+        return;
 
     /* count samples with signal over -3dB */
-    for(idx=0; idx<s->count; idx++)
+    for (idx = 0; idx < s->count; idx++)
     {
         val = pattern_signal_get_sample_raw(s, idx);
-        if(s->peak - val <= 3.0)
+        if (s->peak - val <= 3.0)
             mainlobe++;
     }
 
     mainlobe /= 3;
 
-    for(idx=0; idx<s->count; idx++)
+    for (idx = 0; idx < s->count; idx++)
     {
         val = pattern_signal_get_sample_raw(s, idx);
 
-        for(i=1; i<=mainlobe; i++)
+        for (i = 1; i <= mainlobe; i++)
         {
            val += pattern_signal_get_sample_raw(s, idx-i);
            val += pattern_signal_get_sample_raw(s, idx+i);
         }
-        val /= mainlobe*2.0 + 1.0;
+        val /= mainlobe * 2.0 + 1.0;
 
-        if(isnan(max) || max < val)
+        if (isnan(max) || max < val)
         {
             max = val;
             rotate = idx;
@@ -441,27 +420,29 @@ pattern_signal_interp_init(pattern_signal_t *s)
     count = (size_t)s->count+1;
 
     /* Akima interpolation requires at least 5 samples */
-    if(s->interp != PATTERN_INTERP_LINEAR &&
-       count < gsl_interp_type_min_size(gsl_interp_akima_periodic))
+    if (s->interp != PATTERN_INTERP_LINEAR &&
+        count < gsl_interp_type_min_size(gsl_interp_akima_periodic))
+    {
         s->interp = PATTERN_INTERP_LINEAR;
+    }
 
     x = g_malloc(count * sizeof(gdouble));
     y = g_malloc(count * sizeof(gdouble));
 
     /* count+1, loop one more time at the end */
-    for(idx=0; idx<=s->count; idx++)
+    for (idx = 0; idx <= s->count; idx++)
     {
         x[idx] = idx;
         y[idx] = pattern_signal_get_sample_raw(s, idx);
 
-        if(s->avg > 0)
+        if (s->avg > 0)
         {
-            for(i=1; i<=s->avg; i++)
+            for (i = 1; i <= s->avg; i++)
             {
-               y[idx] += pattern_signal_get_sample_raw(s, idx-i);
-               y[idx] += pattern_signal_get_sample_raw(s, idx+i);
+               y[idx] += pattern_signal_get_sample_raw(s, idx - i);
+               y[idx] += pattern_signal_get_sample_raw(s, idx + i);
             }
-            y[idx] /= s->avg*2.0 + 1.0;
+            y[idx] /= s->avg * 2.0 + 1.0;
         }
     }
 
@@ -476,12 +457,13 @@ pattern_signal_interp_init(pattern_signal_t *s)
 static void
 pattern_signal_interp_invalidate(pattern_signal_t *s)
 {
-    if(s->acc)
+    if (s->acc != NULL)
     {
         gsl_interp_accel_free(s->acc);
         s->acc = NULL;
     }
-    if(s->spline)
+
+    if (s->spline != NULL)
     {
         gsl_spline_free(s->spline);
         s->spline = NULL;

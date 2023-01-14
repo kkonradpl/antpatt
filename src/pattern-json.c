@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 
 #define PATTERN_JSON_VERSION 1
 
-#define READ_BUFFER   50*1024
+#define READ_BUFFER    (50*1024)
 
 #define KEY_VERSION    APP_NAME
 #define KEY_SIZE       "size"
@@ -67,7 +67,7 @@ pattern_json_load(pattern_t    *p,
     gboolean ret;
 
 	gzfp = gzopen(filename, "r");
-	if(!gzfp)
+	if (gzfp == NULL)
 	{
         *error = g_strdup_printf("Failed to open a file:\n%s", filename);
         return FALSE;
@@ -79,15 +79,15 @@ pattern_json_load(pattern_t    *p,
         n = gzread(gzfp, buffer, READ_BUFFER);
         root = json_tokener_parse_ex(json, buffer, n);
 
-        if(gzeof(gzfp))
+        if (gzeof(gzfp))
         {
             jerr = json_tokener_get_error(json);
             break;
         }
-        else if(n < READ_BUFFER)
+        else if (n < READ_BUFFER)
         {
             err_string = gzerror(gzfp, &gerr);
-            if(gerr)
+            if (gerr)
             {
                 *error = g_strdup_printf("Failed to read a file:\n%s\n%s", filename, err_string);
                 gzclose(gzfp);
@@ -97,10 +97,10 @@ pattern_json_load(pattern_t    *p,
         }
     } while ((jerr = json_tokener_get_error(json)) == json_tokener_continue);
 
-    if(jerr != json_tokener_success)
+    if (jerr != json_tokener_success)
     {
         *error = g_strdup_printf("Failed to parse a file:\n%s\n%s", filename, json_tokener_error_desc(jerr));
-        if(root)
+        if (root != NULL)
             json_object_put(root);
         json_tokener_free(json);
         return FALSE;
@@ -127,94 +127,94 @@ pattern_json_parse(pattern_t    *p,
     pattern_data_t *data;
     size_t len, i;
 
-    if(!json_object_object_get_ex(root, KEY_VERSION, &object))
+    if (!json_object_object_get_ex(root, KEY_VERSION, &object))
     {
         *error = g_strdup("Invalid file format");
         return FALSE;
     }
 
     version = json_object_get_int(object);
-    if(version != PATTERN_JSON_VERSION)
+    if (version != PATTERN_JSON_VERSION)
     {
         *error = g_strdup("Invalid file format version");
         return FALSE;
     }
 
     /* KEY_SIZE (int) */
-    if(json_object_object_get_ex(root, KEY_SIZE, &object) &&
-       json_object_is_type(object, json_type_int))
+    if (json_object_object_get_ex(root, KEY_SIZE, &object) &&
+        json_object_is_type(object, json_type_int))
     {
         pattern_set_size(p, json_object_get_int(object));
     }
 
     /* KEY_TITLE (string) */
-    if(json_object_object_get_ex(root, KEY_TITLE, &object) &&
-       json_object_is_type(object, json_type_string))
+    if (json_object_object_get_ex(root, KEY_TITLE, &object) &&
+        json_object_is_type(object, json_type_string))
     {
         pattern_set_title(p, json_object_get_string(object));
     }
 
     /* KEY_SCALE (int) */
-    if(json_object_object_get_ex(root, KEY_SCALE, &object) &&
-       json_object_is_type(object, json_type_int))
+    if (json_object_object_get_ex(root, KEY_SCALE, &object) &&
+        json_object_is_type(object, json_type_int))
     {
         pattern_set_scale(p, json_object_get_int(object));
     }
 
     /* KEY_LINE (double) */
-    if(json_object_object_get_ex(root, KEY_LINE, &object))
+    if (json_object_object_get_ex(root, KEY_LINE, &object))
     {
-        if(json_object_is_type(object, json_type_double))
+        if (json_object_is_type(object, json_type_double))
             pattern_set_line(p, json_object_get_double(object));
-        else if(json_object_is_type(object, json_type_int))
+        else if (json_object_is_type(object, json_type_int))
             pattern_set_line(p, (gdouble)json_object_get_int(object));
     }
 
     /* KEY_INTERP (int) */
-    if(json_object_object_get_ex(root, KEY_INTERP, &object) &&
-       json_object_is_type(object, json_type_int))
+    if (json_object_object_get_ex(root, KEY_INTERP, &object) &&
+        json_object_is_type(object, json_type_int))
     {
         pattern_set_interp(p, json_object_get_int(object));
     }
 
     /* KEY_FULL_ANGLE (boolean) */
-    if(json_object_object_get_ex(root, KEY_FULL_ANGLE, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_FULL_ANGLE, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_set_full_angle(p, json_object_get_boolean(object));
     }
 
     /* KEY_BLACK (boolean) */
-    if(json_object_object_get_ex(root, KEY_BLACK, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_BLACK, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_set_black(p, json_object_get_boolean(object));
     }
 
     /* KEY_NORMALIZE (boolean) */
-    if(json_object_object_get_ex(root, KEY_NORMALIZE, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_NORMALIZE, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_set_normalize(p, json_object_get_boolean(object));
     }
 
     /* KEY_LEGEND (boolean) */
-    if(json_object_object_get_ex(root, KEY_LEGEND, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_LEGEND, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_set_legend(p, json_object_get_boolean(object));
     }
 
     /* KEY_DATA (array) */
-    if(json_object_object_get_ex(root, KEY_DATA, &array) &&
-       json_object_is_type(array, json_type_array))
+    if (json_object_object_get_ex(root, KEY_DATA, &array) &&
+        json_object_is_type(array, json_type_array))
     {
         len = json_object_array_length(array);
-        for(i=0; i<len; i++)
+        for (i = 0; i < len; i++)
         {
             object = json_object_array_get_idx(array, i);
             data = pattern_json_parse_data(object);
-            if(data)
+            if (data != NULL)
                 pattern_add(p, data);
         }
     }
@@ -231,25 +231,25 @@ pattern_json_parse_data(json_object *root)
     size_t len, i;
     GdkRGBA color;
 
-    if(!json_object_object_get_ex(root, KEY_SAMPLES, &array) ||
-       !json_object_is_type(array, json_type_array) ||
-       !(len = json_object_array_length(array)))
+    if (!json_object_object_get_ex(root, KEY_SAMPLES, &array) ||
+        !json_object_is_type(array, json_type_array) ||
+        !(len = json_object_array_length(array)))
     {
         /* No signal samples */
         return NULL;
     }
 
     s = pattern_signal_new();
-    for(i=0; i<len; i++)
+    for (i = 0; i < len; i++)
     {
         object = json_object_array_get_idx(array, i);
-        if(json_object_is_type(object, json_type_double))
+        if (json_object_is_type(object, json_type_double))
             pattern_signal_push(s, json_object_get_double(object));
-        else if(json_object_is_type(object, json_type_int))
+        else if (json_object_is_type(object, json_type_int))
             pattern_signal_push(s, json_object_get_int(object));
     }
 
-    if(!pattern_signal_count(s))
+    if (!pattern_signal_count(s))
     {
         /* No valid signal samples */
         pattern_signal_free(s);
@@ -260,58 +260,58 @@ pattern_json_parse_data(json_object *root)
     data = pattern_data_new(s);
 
     /* KEY_NAME (string) */
-    if(json_object_object_get_ex(root, KEY_NAME, &object) &&
-       json_object_is_type(object, json_type_string))
+    if (json_object_object_get_ex(root, KEY_NAME, &object) &&
+        json_object_is_type(object, json_type_string))
     {
         pattern_data_set_name(data, json_object_get_string(object));
     }
 
     /* KEY_FREQ (int) */
-    if(json_object_object_get_ex(root, KEY_FREQ, &object) &&
-       json_object_is_type(object, json_type_int))
+    if (json_object_object_get_ex(root, KEY_FREQ, &object) &&
+        json_object_is_type(object, json_type_int))
     {
         pattern_data_set_freq(data, json_object_get_int(object));
     }
 
     /* KEY_COLOR (string) */
-    if(json_object_object_get_ex(root, KEY_COLOR, &object) &&
-       json_object_is_type(object, json_type_string))
+    if (json_object_object_get_ex(root, KEY_COLOR, &object) &&
+        json_object_is_type(object, json_type_string))
     {
-        if(gdk_rgba_parse(&color, json_object_get_string(object)))
+        if (gdk_rgba_parse(&color, json_object_get_string(object)))
             pattern_data_set_color(data, &color);
     }
 
     /* KEY_HIDE (boolean) */
-    if(json_object_object_get_ex(root, KEY_HIDE, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_HIDE, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_data_set_hide(data, json_object_get_boolean(object));
     }
 
     /* KEY_FILL (boolean) */
-    if(json_object_object_get_ex(root, KEY_FILL, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_FILL, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_data_set_fill(data, json_object_get_boolean(object));
     }
 
     /* KEY_REV (boolean) */
-    if(json_object_object_get_ex(root, KEY_REV, &object) &&
-       json_object_is_type(object, json_type_boolean))
+    if (json_object_object_get_ex(root, KEY_REV, &object) &&
+        json_object_is_type(object, json_type_boolean))
     {
         pattern_signal_set_rev(s, json_object_get_boolean(object));
     }
 
     /* KEY_AVG (int) */
-    if(json_object_object_get_ex(root, KEY_AVG, &object) &&
-       json_object_is_type(object, json_type_int))
+    if (json_object_object_get_ex(root, KEY_AVG, &object) &&
+        json_object_is_type(object, json_type_int))
     {
         pattern_signal_set_avg(s, json_object_get_int(object));
     }
 
     /* KEY_ROTATE (boolean) */
-    if(json_object_object_get_ex(root, KEY_ROTATE, &object) &&
-       json_object_is_type(object, json_type_int))
+    if (json_object_object_get_ex(root, KEY_ROTATE, &object) &&
+        json_object_is_type(object, json_type_int))
     {
         pattern_signal_set_rotate(s, json_object_get_int(object));
     }
@@ -334,19 +334,19 @@ pattern_json_save(pattern_t   *p,
     gint wrote_gz;
 
     ext = strrchr(filename, '.');
-    if(ext && !g_ascii_strcasecmp(ext, ".gz"))
+    if (ext && !g_ascii_strcasecmp(ext, ".gz"))
         gzfp = gzopen(filename, "wb");
     else
         fp = g_fopen(filename, "w");
 
-    if(!gzfp && !fp)
+    if (!gzfp && !fp)
         return FALSE;
 
     json = pattern_json_build(p, config);
     json_string = json_object_to_json_string_ext(json, JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED);
     json_length = strlen(json_string);
 
-    if(gzfp)
+    if (gzfp)
     {
         wrote_gz = gzwrite(gzfp, json_string, (guint)json_length);
         wrote = wrote_gz >= 0 ? (size_t)wrote_gz : 0;
@@ -380,7 +380,7 @@ pattern_json_build(pattern_t *p,
     json_object_object_add(root, KEY_NORMALIZE,  json_object_new_boolean(pattern_get_normalize(p)));
     json_object_object_add(root, KEY_LEGEND,     json_object_new_boolean(pattern_get_legend(p)));
 
-    if(!config)
+    if (!config)
     {
         array = json_object_new_array();
         gtk_tree_model_foreach(GTK_TREE_MODEL(pattern_get_model(p)), pattern_json_build_foreach, array);
@@ -423,10 +423,10 @@ pattern_json_build_foreach(GtkTreeModel *model,
     json_object_object_add(child, KEY_ROTATE,   json_object_new_int(pattern_signal_get_rotate(signal)));
 
     n = pattern_signal_count(signal);
-    if(n)
+    if (n)
     {
         array = json_object_new_array();
-        for(i=0; i<n; i++)
+        for (i = 0; i < n; i++)
         {
             sample = pattern_signal_get_sample_raw(signal, i);
             format = pattern_json_format_double(sample);

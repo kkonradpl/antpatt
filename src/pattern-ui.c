@@ -14,6 +14,7 @@
  */
 
 #include <gtk/gtk.h>
+#include "pattern.h"
 #include "pattern-ui.h"
 #include "pattern-ui-window.h"
 #include "pattern-ui-dialogs.h"
@@ -28,7 +29,7 @@
 
 struct pattern_ui
 {
-    pattern_ui_window_t *window;
+    struct pattern_ui_window *window;
     pattern_t *p;
     gint focus_idx;
     gint rotating_idx;
@@ -179,13 +180,13 @@ pattern_ui_changed(pattern_ui_t *ui)
 
     switch (pattern_ui_dialog_ask_unsaved(GTK_WINDOW(ui->window->window)))
     {
-        case GTK_RESPONSE_YES:
-            gtk_button_clicked(GTK_BUTTON(ui->window->b_save));
-            return pattern_changed(ui->p);
-        case GTK_RESPONSE_NO:
-            return FALSE;
-        default:
-            return TRUE;
+    case GTK_RESPONSE_YES:
+        gtk_button_clicked(GTK_BUTTON(ui->window->b_save));
+        return pattern_changed(ui->p);
+    case GTK_RESPONSE_NO:
+        return FALSE;
+    default:
+        return TRUE;
     }
 }
 
@@ -213,6 +214,15 @@ pattern_ui_new(GtkWidget    *widget,
 {
     if (pattern_ui_changed(ui))
         return;
+
+    if (ui->interactive)
+    {
+        /* Ignore in interactive mode */
+        pattern_ui_dialog(GTK_WINDOW(ui->window->window), GTK_MESSAGE_ERROR,
+                          APP_TITLE,
+                          "Unable to continue operation during active interactive console mode");
+        return;
+    }
 
     gint size = pattern_get_size(ui->p);
     pattern_reset(ui->p);
@@ -301,7 +311,7 @@ static void
 pattern_ui_render(GtkWidget    *widget,
                   pattern_ui_t *ui)
 {
-    g_autofree gchar* filename = pattern_ui_dialog_render(GTK_WINDOW(ui->window->window));
+    g_autofree gchar *filename = pattern_ui_dialog_render(GTK_WINDOW(ui->window->window));
 
     if (filename)
     {
@@ -354,17 +364,17 @@ pattern_ui_scale(GtkWidget    *widget,
 
     gint scale = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
-    if(scale == PATTERN_UI_SCALE_ARRL)
+    if (scale == PATTERN_UI_SCALE_ARRL)
         pattern_set_scale(ui->p, 0);
-    else if(scale == PATTERN_UI_SCALE_LINEAR_20)
+    else if (scale == PATTERN_UI_SCALE_LINEAR_20)
         pattern_set_scale(ui->p, -20);
-    else if(scale == PATTERN_UI_SCALE_LINEAR_30)
+    else if (scale == PATTERN_UI_SCALE_LINEAR_30)
         pattern_set_scale(ui->p, -30);
-    else if(scale == PATTERN_UI_SCALE_LINEAR_40)
+    else if (scale == PATTERN_UI_SCALE_LINEAR_40)
         pattern_set_scale(ui->p, -40);
-    else if(scale == PATTERN_UI_SCALE_LINEAR_50)
+    else if (scale == PATTERN_UI_SCALE_LINEAR_50)
         pattern_set_scale(ui->p, -50);
-    else if(scale == PATTERN_UI_SCALE_LINEAR_60)
+    else if (scale == PATTERN_UI_SCALE_LINEAR_60)
         pattern_set_scale(ui->p, -60);
 
     gtk_widget_queue_draw(ui->window->plot);
@@ -559,7 +569,7 @@ pattern_ui_remove(GtkWidget    *widget,
     GtkTreeIter next;
     GtkTreePath *path;
 
-    if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(ui->window->c_select), &iter))
+    if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(ui->window->c_select), &iter))
         return;
 
     if (!pattern_ui_dialog_yesno(GTK_WINDOW(ui->window->window),
@@ -578,13 +588,13 @@ pattern_ui_remove(GtkWidget    *widget,
     }
 
     next = iter;
-    if(gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(ui->p)), &next))
+    if (gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(ui->p)), &next))
         gtk_combo_box_set_active_iter(GTK_COMBO_BOX(ui->window->c_select), &next);
     else
     {
         path = gtk_tree_model_get_path(GTK_TREE_MODEL(pattern_get_model(ui->p)), &iter);
         gtk_tree_path_prev(path);
-        if(gtk_tree_model_get_iter(GTK_TREE_MODEL(pattern_get_model(ui->p)), &next, path))
+        if (gtk_tree_model_get_iter(GTK_TREE_MODEL(pattern_get_model(ui->p)), &next, path))
             gtk_combo_box_set_active_iter(GTK_COMBO_BOX(ui->window->c_select), &next);
         gtk_tree_path_free(path);
     }
@@ -627,7 +637,7 @@ pattern_ui_name(GtkWidget    *widget,
 
     GtkTreeIter iter;
 
-    if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(ui->window->c_select), &iter))
+    if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(ui->window->c_select), &iter))
         return;
 
     pattern_data_set_name(pattern_get_current(ui->p), gtk_entry_get_text(GTK_ENTRY(widget)));
@@ -780,25 +790,25 @@ pattern_ui_sync_full(pattern_ui_t *ui)
 
     switch (pattern_get_scale(ui->p))
     {
-        default:
-        case 0:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_ARRL);
-            break;
-        case -20:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_20);
-            break;
-        case -30:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_30);
-            break;
-        case -40:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_40);
-            break;
-        case -50:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_50);
-            break;
-        case -60:
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_60);
-            break;
+    default:
+    case 0:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_ARRL);
+        break;
+    case -20:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_20);
+        break;
+    case -30:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_30);
+        break;
+    case -40:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_40);
+        break;
+    case -50:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_50);
+        break;
+    case -60:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_scale), PATTERN_UI_SCALE_LINEAR_60);
+        break;
     }
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui->window->s_line), pattern_get_line(ui->p));
@@ -815,7 +825,7 @@ pattern_ui_sync_full(pattern_ui_t *ui)
     g_signal_emit_by_name(ui->window->s_size, "value-changed", ui);
     ui->lock--;
 
-    if(gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(ui->p)), NULL))
+    if (gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(ui->p)), NULL))
         gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_select), 0);
 
     pattern_ui_window_set_title(ui->window, pattern_get_filename(ui->p));
@@ -887,23 +897,24 @@ pattern_ui_drag_data_received(GtkWidget        *widget,
     gchar *current;
     GSList *filenames = NULL;
 
+    /* Ignore drag and drop events in interactive mode */
     if (ui->interactive)
-    {
-        /* Ignore drag and drop events in interactive mode */
         return;
-    }
 
-    if (!selection_data || info != UI_DRAG_URI_LIST_ID)
+    if (selection_data == NULL)
+        return;
+
+    if (info != UI_DRAG_URI_LIST_ID)
         return;
 
     list = gtk_selection_data_get_uris(selection_data);
-    if (!list)
+    if (list == NULL)
         return;
 
     for (uri = list; *uri; uri++)
     {
         current = g_filename_from_uri(*uri, NULL, NULL);
-        if(current)
+        if (current)
             filenames = g_slist_prepend(filenames, current);
     }
     g_strfreev(list);
@@ -937,7 +948,7 @@ pattern_ui_format_desc(GtkCellLayout   *cell_layout,
     count = pattern_signal_count(s);
     interp = pattern_signal_interp(s);
 
-    if(interp > 1)
+    if (interp > 1)
         text = g_strdup_printf("%d. %s (%d samples) [%dx]", n[0]+1, pattern_data_get_name(data), count, interp);
     else
         text = g_strdup_printf("%d. %s (%d samples)", n[0]+1, pattern_data_get_name(data), count);
@@ -979,16 +990,16 @@ pattern_ui_read(pattern_ui_t *ui,
     gboolean added = FALSE;
     GdkRGBA color;
 
-    for(it = list; it; it = it->next)
+    for (it = list; it; it = it->next)
     {
         filename = (gchar*)it->data;
 
         im = pattern_import_new();
         error = pattern_import(im, filename);
-        if(error != PATTERN_IMPORT_OK)
+        if (error != PATTERN_IMPORT_OK)
         {
             pattern_import_free(im, TRUE);
-            switch(error)
+            switch (error)
             {
             case PATTERN_IMPORT_ERROR:
                 pattern_ui_dialog(GTK_WINDOW(ui->window->window), GTK_MESSAGE_ERROR,
@@ -1031,7 +1042,7 @@ pattern_ui_read(pattern_ui_t *ui,
         added = TRUE;
     }
 
-    if(added)
+    if (added)
     {
         index = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(pattern_get_model(ui->p)), NULL) - 1;
         gtk_combo_box_set_active(GTK_COMBO_BOX(ui->window->c_select), index);

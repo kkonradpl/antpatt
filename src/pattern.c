@@ -172,7 +172,7 @@ pattern_add(pattern_t      *p,
     g_assert(data != NULL);
     gtk_list_store_insert_with_values(p->model, NULL, -1, PATTERN_COL_DATA, data, -1);
 
-    if(!pattern_data_get_hide(data))
+    if (!pattern_data_get_hide(data))
         p->visible++;
 
     pattern_signal_set_interp(pattern_data_get_signal(data), p->interp);
@@ -195,10 +195,10 @@ pattern_remove(pattern_t   *p,
     pattern_data_free(data);
     gtk_list_store_remove(p->model, remove);
 
-    if(p->current == data)
+    if (p->current == data)
         pattern_set_current(p, NULL);
 
-    if(visible)
+    if (visible)
         p->visible--;
 
     /* No need to set pattern_changed explicitly */
@@ -481,7 +481,7 @@ pattern_get_peak(const pattern_t *p)
         if (isnan(peak) || peak < pattern_signal_get_peak(pattern_data_get_signal(data)))
             peak = pattern_signal_get_peak(pattern_data_get_signal(data));
 
-    } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(p->model), &iter));
+    } while (gtk_tree_model_iter_next(GTK_TREE_MODEL(p->model), &iter));
 
     return peak;
 }

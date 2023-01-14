@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2022  Konrad Kosmatka
+ *  Copyright (c) 2017-2023  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -67,17 +67,17 @@ pattern_misc_info_all(pattern_t *p,
 
     str = g_string_new(NULL);
 
-    angle_displ = (!pattern_get_full_angle(p) && angle > 180.0) ? angle-360.0 : angle;
+    angle_displ = (!pattern_get_full_angle(p) && angle > 180.0) ? angle - 360.0 : angle;
     g_string_append_printf(str,
                            "<big>Angle: %.2f°</big>\n\n",
                            angle_displ);
 
-    if(gtk_tree_model_get_iter_first(GTK_TREE_MODEL(pattern_get_model(p)), &iter))
+    if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(pattern_get_model(p)), &iter))
     {
         do
         {
             gtk_tree_model_get(GTK_TREE_MODEL(pattern_get_model(p)), &iter, PATTERN_COL_DATA, &data, -1);
-            if(pattern_data_get_hide(data))
+            if (pattern_data_get_hide(data))
                 continue;
 
             s = pattern_data_get_signal(data);
@@ -95,14 +95,14 @@ pattern_misc_info_all(pattern_t *p,
                                    (pattern_get_black(p) ? "black" : "white"),
                                    color,
                                    pattern_data_get_name(data),
-                                   pattern_signal_get_sample_interp(s, (gint)x, x-(gint)x),
-                                   pattern_signal_get_sample_interp(s, (gint)x, x-(gint)x) - peak);
+                                   pattern_signal_get_sample_interp(s, (gint)x, x - (gint)x),
+                                   pattern_signal_get_sample_interp(s, (gint)x, x - (gint)x) - peak);
 
             g_free(color);
-        } while(gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(p)), &iter));
+        } while (gtk_tree_model_iter_next(GTK_TREE_MODEL(pattern_get_model(p)), &iter));
     }
 
     cstr = g_string_free(str, FALSE);
-    cstr[strlen(cstr)-2] = '\0'; // remove last two line feeds
+    cstr[strlen(cstr) - 2] = '\0'; // remove last two line feeds
     return cstr;
 }

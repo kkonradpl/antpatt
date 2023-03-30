@@ -30,7 +30,8 @@ set(SOURCE_FILES
         pattern-ui-window.h
         pattern-ui.c
         pattern-ui.h
-        version.h)
+        version.h
+        ${CMAKE_BINARY_DIR}/resources.c)
 
 set(SOURCE_FILES_MINGW
         icon.rc
@@ -55,5 +56,5 @@ ELSE()
     add_executable(antpatt ${SOURCE_FILES})
 ENDIF()
 
+target_include_directories(antpatt PRIVATE ${CMAKE_BINARY_DIR})
 target_link_libraries(antpatt ${LIBRARIES})
-

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+    <gresource prefix="/org/antpatt/">
+        <file>icons/16x16/apps/antpatt.png</file>
+        <file>icons/22x22/apps/antpatt.png</file>
+        <file>icons/24x24/apps/antpatt.png</file>
+        <file>icons/32x32/apps/antpatt.png</file>
+        <file>icons/48x48/apps/antpatt.png</file>
+        <file>icons/scalable/apps/antpatt.svg</file>
+    </gresource>
+</gresources>

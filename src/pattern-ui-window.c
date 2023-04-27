@@ -309,6 +309,8 @@ pattern_ui_window_attach(struct pattern_ui_window *window)
     gtk_container_remove(GTK_CONTAINER(window->window_plot), window->plot);
     gtk_box_set_center_widget(GTK_BOX(window->box_plot), window->plot);
     g_object_unref(window->plot);
+
+    return TRUE;
 }
 
 static void

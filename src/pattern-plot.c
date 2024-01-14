@@ -60,6 +60,7 @@ static void pattern_plot_frequency(cairo_t*, pattern_plot_t*, gint);
 static void pattern_plot_focus(cairo_t*, pattern_plot_t*, pattern_t*);
 static void pattern_plot_pointer(cairo_t*, pattern_plot_t*, pattern_t*, pattern_data_t*);
 static void pattern_plot_info(cairo_t*, pattern_plot_t*, pattern_t*, pattern_data_t*);
+static void pattern_plot_stats(cairo_t*, pattern_plot_t*, pattern_t*, pattern_data_t*);
 
 static gdouble pattern_plot_signal(gint, gdouble);
 
@@ -461,6 +462,7 @@ pattern_plot_focus(cairo_t        *cr,
 
     pattern_plot_pointer(cr, plot, p, data);
     pattern_plot_info(cr, plot, p, data);
+    pattern_plot_stats(cr, plot, p, data);
 }
 
 
@@ -533,6 +535,59 @@ pattern_plot_info(cairo_t        *cr,
     cairo_move_to(cr, round(x), round(y));
     g_snprintf(buff, sizeof(buff), "Att: %.1f dB", pattern_signal_get_sample(s, idx) - peak);
     cairo_show_text(cr, buff);
+    cairo_stroke(cr);
+}
+
+static void
+pattern_plot_stats(cairo_t        *cr,
+                   pattern_plot_t *plot,
+                   pattern_t      *p,
+                   pattern_data_t *data)
+{
+    const pattern_signal_t *s = pattern_data_get_signal(data);
+    gdouble max = pattern_signal_get_peak(s);
+    gdouble min = pattern_signal_get_min(s);
+    gdouble delta = max - min;
+
+    const GdkRGBA *color = pattern_data_get_color(data);
+    cairo_set_source_rgba(cr,
+                          color->red,
+                          color->green,
+                          color->blue,
+                          1.0);
+
+
+    gint offset = (gint)(plot->width / (PATTERN_PLOT_BASE_SIZE / (PATTERN_PLOT_OFFSET / 4.0)));
+    gint font_height = (gint)(plot->width / (PATTERN_PLOT_BASE_SIZE / PATTERN_FONT_SIZE_LEGEND));
+    gint spacing = (gint)(plot->width / (PATTERN_PLOT_BASE_SIZE / PATTERN_LEGEND_SPACING));
+    gchar text[50];
+    gint x, y;
+
+    cairo_text_extents_t extents;
+    cairo_set_font_size(cr, font_height);
+
+    g_snprintf(text, sizeof(text), "Max: %.1f dB", max);
+    cairo_text_extents(cr, text, &extents);
+    x = plot->width - extents.width - offset;
+    y = (gint)plot->offset + spacing;
+    cairo_move_to(cr, round(x), round(y));
+    cairo_show_text(cr, text);
+    cairo_stroke(cr);
+
+    g_snprintf(text, sizeof(text), "Min: %.1f dB", min);
+    cairo_text_extents(cr, text, &extents);
+    x = plot->width - extents.width - offset;
+    y += font_height + spacing;
+    cairo_move_to(cr, round(x), round(y));
+    cairo_show_text(cr, text);
+    cairo_stroke(cr);
+
+    g_snprintf(text, sizeof(text), "\u0394: %.1f dB", delta);
+    cairo_text_extents(cr, text, &extents);
+    x = plot->width - extents.width - offset;
+    y += font_height + spacing;
+    cairo_move_to(cr, round(x), round(y));
+    cairo_show_text(cr, text);
     cairo_stroke(cr);
 }
 

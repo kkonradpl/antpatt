@@ -43,6 +43,7 @@ gdouble  pattern_signal_get_sample(const pattern_signal_t*, gint);
 gdouble  pattern_signal_get_sample_raw(const pattern_signal_t*, gint);
 gdouble  pattern_signal_get_sample_interp(pattern_signal_t*, gint, gdouble);
 
+gdouble  pattern_signal_get_min(const pattern_signal_t*);
 gdouble  pattern_signal_get_peak(const pattern_signal_t*);
 void     pattern_signal_set_peak(pattern_signal_t*, gdouble);
 

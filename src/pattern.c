@@ -90,7 +90,7 @@ pattern_reset(pattern_t *p)
     pattern_set_full_angle(p, PATTERN_DEFAULT_FULL_ANGLE);
     pattern_set_black(p, PATTERN_DEFAULT_BLACK);
     pattern_set_normalize(p, PATTERN_DEFAULT_NORMALIZE);
-    pattern_set_legend(p,PATTERN_DEFAULT_LEGEND);
+    pattern_set_legend(p, PATTERN_DEFAULT_LEGEND);
 
     pattern_clear(p);
 

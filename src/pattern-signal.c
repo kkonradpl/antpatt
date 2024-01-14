@@ -23,6 +23,7 @@ typedef struct pattern_signal
     GArray *arr;
     gint count;
     gboolean finished;
+    gdouble min;
     gdouble peak;
     gboolean rev;
     gint rotate;
@@ -44,6 +45,7 @@ pattern_signal_new()
     s->arr = g_array_sized_new(FALSE, FALSE, sizeof(gdouble), 360);
     s->count = 0;
     s->finished = FALSE;
+    s->min = NAN;
     s->peak = NAN;
     s->rev = FALSE;
     s->rotate = 0;
@@ -111,6 +113,12 @@ pattern_signal_push(pattern_signal_t *s,
     g_array_append_val(s->arr, val);
     s->count++;
     s->changed = TRUE;
+
+    if (isnan(s->min) ||
+        s->min > val)
+    {
+        s->min = val;
+    }
 
     if (isnan(s->peak) ||
         s->peak < val)
@@ -211,6 +219,13 @@ pattern_signal_get_sample_interp(pattern_signal_t *s,
 }
 
 gdouble
+pattern_signal_get_min(const pattern_signal_t *s)
+{
+    g_assert(s != NULL);
+    return s->min;
+}
+
+gdouble
 pattern_signal_get_peak(const pattern_signal_t *s)
 {
     g_assert(s != NULL);
@@ -228,6 +243,7 @@ pattern_signal_set_peak(pattern_signal_t *s,
 
     offset = peak - s->peak;
     s->peak = peak;
+    s->min = offset + s->min;
 
     for (i = 0; i < s->count; i++)
         g_array_index(s->arr, gdouble, i) = g_array_index(s->arr, gdouble, i) + offset;

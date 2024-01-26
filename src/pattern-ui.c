@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2023  Konrad Kosmatka
+ *  Copyright (c) 2017-2024  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -85,6 +85,7 @@ static void pattern_ui_rev(GtkWidget*, pattern_ui_t*);
 static void pattern_ui_hide(GtkWidget*, pattern_ui_t*);
 
 static void pattern_ui_reset(pattern_ui_t*);
+static void pattern_ui_json_load(pattern_ui_t*, const gchar*);
 static void pattern_ui_sync_full(pattern_ui_t*);
 static void pattern_ui_sync(pattern_ui_t*, gboolean, gboolean);
 
@@ -236,7 +237,6 @@ pattern_ui_load(GtkWidget    *widget,
                 pattern_ui_t *ui)
 {
     g_autofree gchar *filename = NULL;
-    g_autofree gchar *error = NULL;
 
     if (pattern_ui_changed(ui))
         return;
@@ -244,25 +244,7 @@ pattern_ui_load(GtkWidget    *widget,
     filename = pattern_ui_dialog_open(GTK_WINDOW(ui->window->window));
     if (filename)
     {
-        if (ui->interactive)
-        {
-            /* Ignore in interactive mode */
-            pattern_ui_dialog(GTK_WINDOW(ui->window->window), GTK_MESSAGE_ERROR,
-                              APP_TITLE,
-                              "Unable to continue operation during active interactive console mode");
-            return;
-        }
-
-        pattern_reset(ui->p);
-        if (!pattern_json_load(ui->p, filename, &error))
-        {
-            pattern_ui_dialog(NULL,
-                              GTK_MESSAGE_ERROR,
-                              "Error",
-                              error);
-        }
-
-        pattern_ui_sync_full(ui);
+        pattern_ui_json_load(ui, filename);
     }
 }
 
@@ -781,6 +763,33 @@ pattern_ui_reset(pattern_ui_t *ui)
 }
 
 static void
+pattern_ui_json_load(pattern_ui_t *ui,
+                     const gchar  *filename)
+{
+    if (ui->interactive)
+    {
+        /* Ignore in interactive mode */
+        pattern_ui_dialog(GTK_WINDOW(ui->window->window), GTK_MESSAGE_ERROR,
+                          APP_TITLE,
+                          "Unable to continue operation during active interactive console mode");
+        return;
+    }
+
+    pattern_reset(ui->p);
+
+    g_autofree gchar *error = NULL;
+    if (!pattern_json_load(ui->p, filename, &error))
+    {
+        pattern_ui_dialog(NULL,
+                          GTK_MESSAGE_ERROR,
+                          "Error",
+                          error);
+    }
+
+    pattern_ui_sync_full(ui);
+}
+
+static void
 pattern_ui_sync_full(pattern_ui_t *ui)
 {
     ui->lock++;
@@ -921,7 +930,20 @@ pattern_ui_drag_data_received(GtkWidget        *widget,
 
     if (filenames)
     {
-        pattern_ui_read(ui, filenames);
+        g_autofree gchar *error = NULL;
+        if (g_slist_length(filenames) == 1 &&
+            pattern_json_load(NULL, (const gchar*)filenames->data, &error))
+        {
+            if (!pattern_ui_changed(ui))
+            {
+                pattern_ui_json_load(ui, (const gchar*)filenames->data);
+            }
+        }
+        else
+        {
+            pattern_ui_read(ui, filenames);
+        }
+
         g_slist_free_full(filenames, g_free);
     }
 }

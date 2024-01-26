@@ -72,11 +72,14 @@ pattern_new()
 void
 pattern_free(pattern_t *p)
 {
-    pattern_clear(p);
-    g_free(p->filename);
-    g_free(p->title);
-    g_free(p->ui);
-    g_free(p);
+    if (p)
+    {
+        pattern_clear(p);
+        g_free(p->filename);
+        g_free(p->title);
+        g_free(p->ui);
+        g_free(p);
+    }
 }
 
 void

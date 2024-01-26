@@ -46,7 +46,8 @@
 #define KEY_ROTATE     "rotate"
 #define KEY_SAMPLES    "samples"
 
-static gboolean pattern_json_parse(pattern_t*, json_object*, gchar**);
+static gboolean pattern_json_check(json_object*, gchar**);
+static void pattern_json_parse(json_object*, pattern_t*);
 static pattern_data_t* pattern_json_parse_data(json_object*);
 static json_object* pattern_json_build(pattern_t*, gboolean);
 static gboolean pattern_json_build_foreach(GtkTreeModel*, GtkTreePath*, GtkTreeIter*, gpointer);
@@ -107,25 +108,25 @@ pattern_json_load(pattern_t    *p,
     }
     gzclose(gzfp);
 
-    ret = pattern_json_parse(p, root, error);
+    ret = pattern_json_check(root, error);
+    if (ret &&
+        p != NULL)
+    {
+        pattern_json_parse(root, p);
+        pattern_set_filename(p, filename);
+        pattern_unchanged(p);
+    }
+
     json_object_put(root);
     json_tokener_free(json);
-
-    pattern_set_filename(p, filename);
-    pattern_unchanged(p);
     return ret;
 }
 
 static gboolean
-pattern_json_parse(pattern_t    *p,
-                   json_object  *root,
+pattern_json_check(json_object  *root,
                    gchar       **error)
 {
     json_object *object;
-    json_object *array;
-    gint version;
-    pattern_data_t *data;
-    size_t len, i;
 
     if (!json_object_object_get_ex(root, KEY_VERSION, &object))
     {
@@ -133,12 +134,24 @@ pattern_json_parse(pattern_t    *p,
         return FALSE;
     }
 
-    version = json_object_get_int(object);
+    gint version = json_object_get_int(object);
     if (version != PATTERN_JSON_VERSION)
     {
         *error = g_strdup("Invalid file format version");
         return FALSE;
     }
+
+    return TRUE;
+}
+
+static void
+pattern_json_parse(json_object *root,
+                   pattern_t   *p)
+{
+    json_object *object;
+    json_object *array;
+    pattern_data_t *data;
+    size_t len, i;
 
     /* KEY_SIZE (int) */
     if (json_object_object_get_ex(root, KEY_SIZE, &object) &&
@@ -218,8 +231,6 @@ pattern_json_parse(pattern_t    *p,
                 pattern_add(p, data);
         }
     }
-
-    return TRUE;
 }
 
 static pattern_data_t*

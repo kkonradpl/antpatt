@@ -5,7 +5,7 @@ Antenna pattern plotting and analysis software.
 
 ![Screenshot](/antpatt.png?raw=true)
 
-Copyright (C) 2017-2023  Konrad Kosmatka
+Copyright (C) 2017-2024  Konrad Kosmatka
 
 https://fmdx.pl/antpatt/
 

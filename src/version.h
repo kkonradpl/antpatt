@@ -1,6 +1,6 @@
 /*
  *  antpatt - antenna pattern plotting and analysis software
- *  Copyright (c) 2017-2023  Konrad Kosmatka
+ *  Copyright (c) 2017-2024  Konrad Kosmatka
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -20,8 +20,8 @@
 #define APP_TITLE_PLOT    "Plot"
 #define APP_NAME          "antpatt"
 #define APP_ICON          "antpatt"
-#define APP_VERSION       "1.1"
-#define APP_COPYRIGHT     "2017-2023"
+#define APP_VERSION       "1.1.1"
+#define APP_COPYRIGHT     "2017-2024"
 #define APP_FILE_EXT      ".antp"
 #define APP_FILE_COMPRESS ".gz"
 

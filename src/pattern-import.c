@@ -119,7 +119,7 @@ pattern_import_xdrp(pattern_import_t *im,
     }
 
     /* Next lines: signal samples */
-    while (fscanf(fp, "%lf", &sample) && !feof(fp))
+    while (!feof(fp) && fscanf(fp, "%lf", &sample))
         pattern_signal_push(im->samples, sample);
 
     if (!pattern_signal_count(im->samples))
